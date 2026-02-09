@@ -1,0 +1,228 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/jetbrains-mono";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.147 0.004 49.25);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.147 0.004 49.25);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.147 0.004 49.25);
+    --dropdown: oklch(0.985 0.01 277);
+    --dropdown-foreground: oklch(0.18 0.01 277);
+    --dropdown-border: oklch(0.91 0.02 277);
+    --dropdown-accent: oklch(0.95 0.03 277);
+    --dropdown-accent-foreground: oklch(0.18 0.02 277);
+    --primary: oklch(0.51 0.23 277);
+    --primary-foreground: oklch(0.96 0.02 272);
+    --secondary: oklch(0.967 0.001 286.375);
+    --secondary-foreground: oklch(0.21 0.006 285.885);
+    --muted: oklch(0.97 0.001 106.424);
+    --muted-foreground: oklch(0.553 0.013 58.071);
+    --accent: oklch(0.97 0.001 106.424);
+    --accent-foreground: oklch(0.216 0.006 56.043);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.923 0.003 48.717);
+    --input: oklch(0.923 0.003 48.717);
+    --ring: oklch(0.709 0.01 56.259);
+    --chart-1: oklch(0.79 0.10 275);
+    --chart-2: oklch(0.68 0.16 277);
+    --chart-3: oklch(0.59 0.20 277);
+    --chart-4: oklch(0.51 0.23 277);
+    --chart-5: oklch(0.46 0.21 277);
+    --radius: 0;
+    --sidebar: oklch(0.985 0.001 106.423);
+    --sidebar-foreground: oklch(0.147 0.004 49.25);
+    --sidebar-primary: oklch(0.51 0.23 277);
+    --sidebar-primary-foreground: oklch(0.96 0.02 272);
+    --sidebar-accent: oklch(0.97 0.001 106.424);
+    --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
+    --sidebar-border: oklch(0.923 0.003 48.717);
+    --sidebar-ring: oklch(0.709 0.01 56.259)
+  }
+  .dark {
+    --background: oklch(0.147 0.004 49.25);
+    --foreground: oklch(0.985 0.001 106.423);
+    --card: oklch(0.216 0.006 56.043);
+    --card-foreground: oklch(0.985 0.001 106.423);
+    --popover: oklch(0.216 0.006 56.043);
+    --popover-foreground: oklch(0.985 0.001 106.423);
+    --dropdown: oklch(0.22 0.01 277);
+    --dropdown-foreground: oklch(0.97 0.005 277);
+    --dropdown-border: oklch(0.34 0.02 277);
+    --dropdown-accent: oklch(0.3 0.02 277);
+    --dropdown-accent-foreground: oklch(0.98 0.01 277);
+    --primary: oklch(0.59 0.20 277);
+    --primary-foreground: oklch(0.96 0.02 272);
+    --secondary: oklch(0.274 0.006 286.033);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.268 0.007 34.298);
+    --muted-foreground: oklch(0.709 0.01 56.259);
+    --accent: oklch(0.268 0.007 34.298);
+    --accent-foreground: oklch(0.985 0.001 106.423);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.553 0.013 58.071);
+    --chart-1: oklch(0.79 0.10 275);
+    --chart-2: oklch(0.68 0.16 277);
+    --chart-3: oklch(0.59 0.20 277);
+    --chart-4: oklch(0.51 0.23 277);
+    --chart-5: oklch(0.46 0.21 277);
+    --sidebar: oklch(0.216 0.006 56.043);
+    --sidebar-foreground: oklch(0.985 0.001 106.423);
+    --sidebar-primary: oklch(0.68 0.16 277);
+    --sidebar-primary-foreground: oklch(0.96 0.02 272);
+    --sidebar-accent: oklch(0.268 0.007 34.298);
+    --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.553 0.013 58.071)
+  }
+  .theme {
+    --font-sans: 'JetBrains Mono Variable', monospace
+  }
+
+  html {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+* {
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+}
+
+@layer utilities {
+  .shopping-cart-art svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    color: var(--foreground);
+  }
+
+  .shopping-cart-art svg path:not([style]):not([fill]),
+  .shopping-cart-art svg circle:not([style]):not([fill]),
+  .shopping-cart-art svg polygon:not([style]):not([fill]),
+  .shopping-cart-art svg rect:not([style]):not([fill]) {
+    fill: currentColor;
+  }
+
+  @keyframes item-detail-fade {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .item-detail-enter {
+    animation: item-detail-fade 520ms ease-out both;
+  }
+
+  .item-detail-enter-media {
+    animation: item-detail-fade 640ms ease-out both;
+    animation-delay: 80ms;
+  }
+
+  .item-detail-enter-info {
+    animation: item-detail-fade 640ms ease-out both;
+    animation-delay: 140ms;
+  }
+
+  @keyframes cart-fade {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .cart-enter {
+    animation: cart-fade 520ms ease-out both;
+  }
+
+  .cart-enter-items {
+    animation: cart-fade 620ms ease-out both;
+    animation-delay: 90ms;
+  }
+
+  .cart-enter-summary {
+    animation: cart-fade 640ms ease-out both;
+    animation-delay: 150ms;
+  }
+
+  @keyframes order-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .order-enter {
+    animation: order-fade-up 520ms ease-out both;
+  }
+
+  .order-enter-main {
+    animation: order-fade-up 620ms ease-out both;
+    animation-delay: 80ms;
+  }
+
+  .order-enter-aside {
+    animation: order-fade-up 640ms ease-out both;
+    animation-delay: 160ms;
+  }
+
+  @keyframes welcome-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .welcome-enter-text {
+    animation: welcome-fade-up 520ms ease-out both;
+  }
+
+  .welcome-enter-art {
+    animation: welcome-fade-up 620ms ease-out both;
+    animation-delay: 120ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .item-detail-enter,
+    .item-detail-enter-media,
+    .item-detail-enter-info,
+    .cart-enter,
+    .cart-enter-items,
+    .cart-enter-summary,
+    .order-enter,
+    .order-enter-main,
+    .order-enter-aside,
+    .welcome-enter-text,
+    .welcome-enter-art {
+      animation: none;
+    }
+  }
+}

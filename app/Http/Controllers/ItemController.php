@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\OptionalType;
+use App\Models\Product;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class ItemController extends Controller
+{
+    public function detail($name, $id)
+    {
+        $item = Product::where('id', $id)->with(['seller:id,shop_name', 'variants.productType', 'variants.productValues'])->first();
+        return Inertia::render('Item/ItemDetail', ['item' => $item]);
+    }
+
+}

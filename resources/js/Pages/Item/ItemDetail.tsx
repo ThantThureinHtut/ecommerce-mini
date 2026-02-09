@@ -44,13 +44,19 @@ import { usePage } from "@inertiajs/react";
 import { Variant, Product } from "@/types";
 import type { EmblaCarouselType } from "embla-carousel";
 import { Label } from "@/Components/ui/label";
+import axios from "axios";
 
 export default function ItemDetail({ item }: { item: Product }) {
     const rating = item?.ratings_count ?? 0 / 5;
     const reviewCount = item?.ratings_count ?? 0;
     const filledStars = Math.round(rating);
-    const [api, setApi] = useState<EmblaCarouselType>();
-    const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(0);
+    const [priceAndQuantity, setPriceAndQuantity] = useState<{
+        price: number;
+        quantity: number;
+    }>({ price: 0, quantity: 1 });
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState<
+        Record<number, number>
+    >({});
     const images = [
         {
             src: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80",
@@ -75,8 +81,33 @@ export default function ItemDetail({ item }: { item: Product }) {
     const formSubmitHandler = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
     };
+    const handleVariantChange = (
+        variantId: number,
+        selectedValueId: string,
+    ) => {
+        setSelectedVariantIndex((prev) => ({
+            ...prev,
+            [variantId]: Number(selectedValueId),
+        }));
+    };
+    useEffect(() => {
+        axios
+            .post(`${import.meta.env.VITE_BACKEND_URL}/item/variant`, {
+                product_id: item?.id,
+                product_type_id: selectedVariantIndex[1] ?? null,
+                product_value_id: selectedVariantIndex[2] ?? null,
+            })
+            .then((res) => {
+                setPriceAndQuantity({
+                    price: res.data.selectItem?.price ?? item?.base_price,
+                    quantity: res.data.selectItem?.quantity ?? 1,
+                });
+                console.log("Result", res);
+            });
+    }, [selectedVariantIndex]);
 
     console.log(item);
+    console.log("Selected Variant", selectedVariantIndex);
     return (
         <GuestLayout>
             <section className="relative overflow-hidden rounded-none border border-border bg-secondary/40">
@@ -92,7 +123,7 @@ export default function ItemDetail({ item }: { item: Product }) {
                 <div className="relative z-10 grid gap-14 px-6 py-10 lg:grid-cols-[1.1fr_1fr] lg:items-start item-detail-enter">
                     <div className="space-y-4 item-detail-enter-media">
                         <div className="relative lg:max-w-xl  rounded-none border border-border bg-background/90 shadow-sm">
-                            <Carousel setApi={setApi}>
+                            <Carousel>
                                 <CarouselContent>
                                     {images.map((image, index) => (
                                         <CarouselItem key={image.src}>
@@ -143,11 +174,7 @@ export default function ItemDetail({ item }: { item: Product }) {
                             <div className="flex flex-wrap items-center gap-2">
                                 <Badge variant="secondary">Top rated</Badge>
                                 <Badge className="bg-foreground text-background">
-                                    {/* {
-                                        item?.productvariants?.[
-                                            selectedVariantIndex
-                                        ]?.status
-                                    } */}
+                                    In stock
                                 </Badge>
                             </div>
                             <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
@@ -183,7 +210,7 @@ export default function ItemDetail({ item }: { item: Product }) {
                                     Price
                                 </span>
                                 <span className="text-2xl font-semibold text-foreground">
-                                    ${item?.base_price}
+                                    ${priceAndQuantity.price}
                                 </span>
                             </div>
                             <Separator className="my-4" />
@@ -228,13 +255,36 @@ export default function ItemDetail({ item }: { item: Product }) {
                                                             ?.name
                                                     }
                                                 </Label>
+                                                <FieldDescription>
+                                                    Selected:{" "}
+                                                    {product?.product_values?.find(
+                                                        (value) =>
+                                                            value.id ===
+                                                            selectedVariantIndex[
+                                                                product.id
+                                                            ],
+                                                    )?.name ?? "None"}
+                                                </FieldDescription>
 
-                                                <RadioGroup className="gap-3 grid grid-cols-1 md:grid-cols-2 ">
+                                                <RadioGroup
+                                                    value={
+                                                        selectedVariantIndex[
+                                                            product.id
+                                                        ]?.toString() ?? ""
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        handleVariantChange(
+                                                            product.id,
+                                                            value,
+                                                        )
+                                                    }
+                                                    className="gap-3 grid grid-cols-1 md:grid-cols-2 "
+                                                >
                                                     {product?.product_values?.map(
                                                         (value) => (
                                                             <FieldLabel
                                                                 key={value.id}
-                                                                htmlFor={`${value?.name}`}
+                                                                htmlFor={`variant-${product.id}-value-${value.id}`}
                                                                 className="cursor-pointer hover:bg-accent transition-all [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/10 dark:[&:has([data-state=checked])]:bg-primary/20"
                                                             >
                                                                 <Field
@@ -249,8 +299,8 @@ export default function ItemDetail({ item }: { item: Product }) {
                                                                         </FieldTitle>
                                                                     </FieldContent>
                                                                     <RadioGroupItem
-                                                                        value={`${value?.name}`}
-                                                                        id={`${value?.name}`}
+                                                                        value={`${value.id}`}
+                                                                        id={`variant-${product.id}-value-${value.id}`}
                                                                     />
                                                                 </Field>
                                                             </FieldLabel>

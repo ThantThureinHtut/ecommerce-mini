@@ -16,7 +16,6 @@ return new class extends Migration {
             $table->foreignId('product_type_id')->constrained('product_types');
             // product_value_id removed - values now in pivot table
             $table->unique(['product_id', 'product_type_id']); // One variant per product per type
-            $table->timestamps();
         });
     }
 

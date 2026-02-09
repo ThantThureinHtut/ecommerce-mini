@@ -25,6 +25,7 @@ Route::get('/', function () {
 
 // Item Detail Page
 Route::get('/item/{name?}/{id}/detail', [ItemController::class, 'detail'])->name('item.detail');
+Route::post('/item/variant/' ,[ItemController::class, 'selectItem'])->name('item.variant');
 
 // Cart Page and OrderTracking
 Route::get('/cart/{id}', [CartController::class, 'index'])->name('cart.dashboard');

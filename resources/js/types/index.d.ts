@@ -65,6 +65,7 @@ export type Product = {
     name: string;
     details: string;
     base_price: string;
+    stock: number | null;
     seller?: {
         id: number;
         phone_number: string;

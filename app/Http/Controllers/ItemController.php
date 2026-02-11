@@ -18,9 +18,8 @@ class ItemController extends Controller
 
     public function selectItem(Request $request)
     {
-         $selectItem = ProductVariant::where('product_id', $request->product_id)->where('product_value_id' , $request->product_type_id)->get();
-
-        return response()->json(['selectItem' => $selectItem]);
+         $selectItem = ProductVariant::where('product_id', $request->product_id)->where('product_value_id' , $request->product_value_id)->first();
+         return response()->json(['selectItem' => $selectItem]);
     }
 
 }

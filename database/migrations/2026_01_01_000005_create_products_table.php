@@ -14,7 +14,8 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->longText('details');
-            $table->string('base_price');
+            $table->decimal('base_price', 10, 2)->nullable();
+            $table->integer('stock')->nullable();
             $table->foreignId('seller_id')->constrained('sellers')->cascadeOnDelete();
             $table->timestamps();
         });

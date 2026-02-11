@@ -11,8 +11,14 @@ class Product extends Model
     protected $fillable = [
         'name',
         'base_price',
+        'stock',
         'details',
         'seller_id',
+    ];
+
+    protected $casts = [
+        'base_price' => 'decimal:2',
+        'stock' => 'integer',
     ];
     protected $appends = [
         'ratings_count',

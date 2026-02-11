@@ -94,13 +94,12 @@ export default function ItemDetail({ item }: { item: Product }) {
         axios
             .post(`${import.meta.env.VITE_BACKEND_URL}/item/variant`, {
                 product_id: item?.id,
-                product_type_id: selectedVariantIndex[1] ?? null,
-                product_value_id: selectedVariantIndex[2] ?? null,
+                product_value_id: selectedVariantIndex[1] ?? null,
             })
             .then((res) => {
                 setPriceAndQuantity({
                     price: res.data.selectItem?.price ?? item?.base_price,
-                    quantity: res.data.selectItem?.quantity ?? 1,
+                    quantity: res.data.selectItem?.quantity ?? item?.stock,
                 });
                 console.log("Result", res);
             });
@@ -322,7 +321,7 @@ export default function ItemDetail({ item }: { item: Product }) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {Array.from({
-                                            length: Number(),
+                                            length: Number(priceAndQuantity.quantity),
                                         }).map((_, index) => (
                                             <SelectItem
                                                 value={`${index}`}

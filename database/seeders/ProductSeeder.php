@@ -18,7 +18,8 @@ class ProductSeeder extends Seeder
                 'name' => fake()->name(),
                 'details' => fake()->paragraph(),
                 'seller_id' => 1,
-                'base_price' => "Rm 50 -40"
+                'base_price' => "3000.00",
+                'stock' => 100,
             ]);
         }
     }

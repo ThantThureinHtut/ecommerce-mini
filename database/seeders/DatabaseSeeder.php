@@ -20,13 +20,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             SellerSeeder::class,
-            ProductSeeder::class,
-            RatingSeeder::class,
-            ReviewSeeder::class,
+            // ProductSeeder::class,
+            // RatingSeeder::class,
+            // ReviewSeeder::class,
             ProductVariantTypeSeeder::class,
-            ProductVariantValueSeeder::class,
-            ProductVariantSeeder::class,
-            VariantSeeder::class
+            // ProductVariantValueSeeder::class,
+            // VariantSeeder::class,
+            // ProductVariantSeeder::class,
         ]);
 
     }

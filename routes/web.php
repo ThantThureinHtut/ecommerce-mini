@@ -44,6 +44,7 @@ Route::get('/auth/callback', [SocialiteController::class, 'callback'])->name('au
 Route::group(['prefix' => 'seller'], function () {
     Route::get('/dashboard', [SellerController::class, 'index'])->name('seller.dashboard');
     Route::get('/add-product', [ProductController::class, 'index'])->middleware('seller')->name('add-product.dashboard');
+    Route::post('/store-product', [ProductController::class, 'store'])->middleware('seller')->name('store-product');
     Route::get('/order-view', [OrderController::class, 'seller_order_index'])->middleware('seller')->name('order-view.dashboard');
 });
 

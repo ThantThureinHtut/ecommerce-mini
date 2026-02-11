@@ -10,8 +10,14 @@ class ProductVariant extends Model
         'product_id',
         'product_type_id',
         'product_value_id',
-        'base_price',
+        'status',
+        'price',
         'stock',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'stock' => 'integer',
     ];
 
     public function product()

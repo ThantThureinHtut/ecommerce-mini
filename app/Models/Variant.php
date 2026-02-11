@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Variant extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'id',
         'product_id',
@@ -32,4 +34,3 @@ class Variant extends Model
         return $this->belongsToMany(ProductValue::class, 'variant_product_value');
     }
 }
-

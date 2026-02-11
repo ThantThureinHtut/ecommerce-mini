@@ -4,6 +4,7 @@ import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Separator } from "@/Components/ui/separator";
 import { Badge } from "@/Components/ui/badge";
+import { Textarea } from "@/Components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -12,49 +13,162 @@ import {
     SelectValue,
 } from "@/Components/ui/select";
 import {
-    Package,
-    ImageSquare,
-    CurrencyDollar,
-    Tag,
     ArrowLeft,
     CloudArrowUp,
+    ImageSquare,
+    Package,
     Plus,
     Trash,
 } from "@phosphor-icons/react";
 import { Link, useForm } from "@inertiajs/react";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 type ProductForm = {
     name: string;
-    description: string;
-    price: string;
-    compare_price: string;
-    sku: string;
-    quantity: string;
-    category: string;
+    details: string;
+    base_price: string;
+    stock: string;
     images: File[];
+    types?: string[];
+    overrideType: string,
+    overrideValues?: VariantOverrideValue[];
+    additionalTypeValues?: Record<string, string>;
 };
 
+type VariantOverrideValue = {
+    id: number;
+    value: string;
+    price: string;
+    stock: string;
+};
+
+const variantTypes = [
+    "Size",
+    "Color",
+    "Weight",
+    "Storage",
+    "Material",
+    "Length",
+    "Width",
+];
+
 export default function AddProductPage() {
-    const { data, setData, errors, post, processing } = useForm<ProductForm>({
+    const { data, setData, errors, processing , post } = useForm<ProductForm>({
         name: "",
-        description: "",
-        price: "",
-        compare_price: "",
-        sku: "",
-        quantity: "",
-        category: "",
+        details: "",
+        base_price: "",
+        stock: "",
         images: [],
+        types: [],
+        overrideType: "",
+        overrideValues: [],
+        additionalTypeValues: {},
     });
 
+    const imageInputRef = useRef<HTMLInputElement | null>(null);
+    const nextOverrideIdRef = useRef(2);
+
+    const [overrideType, setOverrideType] = useState<string>("");
+    const [overrideValues, setOverrideValues] = useState<VariantOverrideValue[]>([
+        { id: 1, value: "", price: "", stock: "" },
+    ]);
+
+    const [additionalTypes, setAdditionalTypes] = useState<string[]>([]);
+    const [additionalTypeValues, setAdditionalTypeValues] = useState<
+        Record<string, string>
+    >({});
+
+
+    useEffect(() => {
+        if (!overrideType) {
+            return;
+        }
+
+        setAdditionalTypes((prev) => prev.filter((type) => type !== overrideType));
+        setAdditionalTypeValues((prev) => {
+            if (!(overrideType in prev)) {
+                return prev;
+            }
+            const next = { ...prev };
+            // Delete key is use to remove a property from an object
+            delete next[overrideType];
+
+            return next;
+        });
+    }, [overrideType]);
+
+
+    // Functions for handling form actions
     const formSubmitHandler = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // post(route("product.store", data));
+        data.types = [...additionalTypes, overrideType];
+        data.overrideType = overrideType;
+        data.overrideValues = overrideValues;
+        data.additionalTypeValues = additionalTypeValues;
+        console.log("Form Data:", data);
+        post(route("store-product" , data));
+        console.log(errors)
+        // post(route("product.store"), data);
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setData("images", Array.from(e.target.files ?? []));
+    };
+
+
+    // Add the Value Row functions in Variant Section 1
+    const addOverrideValueRow = () => {
+        setOverrideValues((prev) => [
+            ...prev,
+            { id: nextOverrideIdRef.current++, value: "", price: "", stock: "" },
+        ]);
+    };
+
+    // Remove the Value Row functions in Variant Section 1
+    const removeOverrideValueRow = (id: number) => {
+        setOverrideValues((prev) => {
+            // Ensure at least one row remains
+            // if the length is 1, do not remove
+            if (prev.length === 1) {
+                return prev;
+            }
+            return prev.filter((row) => row.id !== id);
+        });
+    };
+
+    const updateOverrideValueRow = (
+        id: number,
+        key: keyof Omit<VariantOverrideValue, "id">,
+        value: string,
+    ) => {
+        setOverrideValues((prev) =>
+            prev.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
+        );
+    };
+
+    const toggleAdditionalType = (type: string) => {
+        if (type === overrideType) {
+            return;
+        }
+
+        setAdditionalTypes((prev) => {
+            if (prev.includes(type)) {
+                return prev.filter((item) => item !== type);
+            }
+            return [...prev, type];
+        });
+    };
+
+    const updateAdditionalTypeValues = (type: string, values: string) => {
+        setAdditionalTypeValues((prev) => ({
+            ...prev,
+            [type]: values,
+        }));
     };
 
     return (
         <SellerLayout>
-            {/* Header Section */}
             <section className="relative overflow-hidden rounded-none border border-border bg-secondary/40">
                 <div
                     aria-hidden="true"
@@ -64,15 +178,17 @@ export default function AddProductPage() {
                     aria-hidden="true"
                     className="pointer-events-none absolute -bottom-24 right-0 size-80 rounded-full bg-primary/10 blur-3xl"
                 />
+
                 <div className="relative z-10 px-6 py-10">
                     <div className="flex flex-col gap-3">
                         <Link
                             href={route("seller.dashboard")}
-                            className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
+                            className="inline-flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground w-fit"
                         >
                             <ArrowLeft className="size-3.5" />
                             Back to Dashboard
                         </Link>
+
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                                 Add new product
@@ -82,350 +198,357 @@ export default function AddProductPage() {
                                 New listing
                             </Badge>
                         </div>
-                        <p className="max-w-2xl text-sm text-muted-foreground">
-                            Fill in the details below to add a new product to
-                            your store. Make sure all required fields are
-                            completed.
+
+                        <p className="max-w-3xl text-sm text-muted-foreground">
+                            Add product details first, then configure variants.
+                            Use the first variant section only when each value has
+                            its own price and stock.
                         </p>
                     </div>
                 </div>
             </section>
 
-            {/* Form Section */}
             <section className="mt-8 pb-8">
-                <form onSubmit={formSubmitHandler}>
-                    <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-                        {/* Left Column - Product Details */}
-                        <div className="space-y-6">
-                            {/* Basic Information */}
-                            <div className="rounded-none border border-border bg-background/90 p-6 shadow-sm">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="grid size-8 place-items-center rounded-none bg-primary/10 text-primary">
-                                        <Tag className="size-4" weight="fill" />
-                                    </div>
-                                    <h2 className="text-base font-medium text-foreground">
-                                        Basic Information
-                                    </h2>
+                <form onSubmit={formSubmitHandler} className="space-y-6">
+                    <div className="rounded-none border border-border bg-background/90 p-6 shadow-sm space-y-4">
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-base font-medium text-foreground">
+                                Product Basics
+                            </h2>
+                        </div>
+                        <Separator />
+
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Product title *</Label>
+                            <Input
+                                id="name"
+                                placeholder="e.g. Premium Cotton T-Shirt"
+                                value={data.name}
+                                onChange={(e) => setData("name", e.target.value)}
+                            />
+                            {errors.name && (
+                                <p className="text-xs text-destructive">{errors.name}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="details">Product description *</Label>
+                            <Textarea
+                                id="details"
+                                rows={5}
+                                placeholder="Describe the product clearly for buyers..."
+                                value={data.details}
+                                onChange={(e) => setData("details", e.target.value)}
+                            />
+                            {errors.details && (
+                                <p className="text-xs text-destructive">{errors.details}</p>
+                            )}
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="base_price">Base price *</Label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                                        $
+                                    </span>
+                                    <Input
+                                        id="base_price"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        className="pl-7"
+                                        value={data.base_price}
+                                        onChange={(e) =>
+                                            setData("base_price", e.target.value)
+                                        }
+                                    />
                                 </div>
-                                <Separator className="mb-5" />
-
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name">
-                                            Product Name *
-                                        </Label>
-                                        <Input
-                                            id="name"
-                                            type="text"
-                                            placeholder="e.g. Premium Wireless Headphones"
-                                            value={data.name}
-                                            onChange={(e) =>
-                                                setData("name", e.target.value)
-                                            }
-                                            className="transition-all focus:ring-2 focus:ring-primary/20"
-                                        />
-                                        {errors.name && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.name}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="description">
-                                            Description
-                                        </Label>
-                                        <textarea
-                                            id="description"
-                                            placeholder="Describe your product in detail..."
-                                            value={data.description}
-                                            onChange={(e) =>
-                                                setData(
-                                                    "description",
-                                                    e.target.value
-                                                )
-                                            }
-                                            rows={4}
-                                            className="flex w-full rounded-none border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-                                        />
-                                        {errors.description && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.description}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="category">
-                                            Category *
-                                        </Label>
-                                        <Select
-                                            onValueChange={(value) =>
-                                                setData("category", value)
-                                            }
-                                        >
-                                            <SelectTrigger className="text-sm">
-                                                <SelectValue placeholder="Select a category" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="electronics">
-                                                    Electronics
-                                                </SelectItem>
-                                                <SelectItem value="clothing">
-                                                    Clothing
-                                                </SelectItem>
-                                                <SelectItem value="home">
-                                                    Home & Garden
-                                                </SelectItem>
-                                                <SelectItem value="sports">
-                                                    Sports & Outdoors
-                                                </SelectItem>
-                                                <SelectItem value="beauty">
-                                                    Beauty & Personal Care
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.category && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.category}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
+                                {errors.base_price && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.base_price}
+                                    </p>
+                                )}
                             </div>
 
-                            {/* Media Upload */}
-                            <div className="rounded-none border border-border bg-background/90 p-6 shadow-sm">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="grid size-8 place-items-center rounded-none bg-primary/10 text-primary">
-                                        <ImageSquare
-                                            className="size-4"
-                                            weight="fill"
+                            <div className="space-y-2">
+                                <Label htmlFor="stock">Stock *</Label>
+                                <Input
+                                    id="stock"
+                                    type="number"
+                                    min="0"
+                                    placeholder="0"
+                                    value={data.stock}
+                                    onChange={(e) => setData("stock", e.target.value)}
+                                />
+                                {errors.stock && (
+                                    <p className="text-xs text-destructive">{errors.stock}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    {/* Variant Section 1 */}
+                    <div className="rounded-none border border-border bg-background/90 p-6 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <h2 className="text-base font-medium text-foreground">
+                                Variant Section 1 (One type with price/stock per value)
+                            </h2>
+                            <Badge variant="secondary">Optional</Badge>
+                        </div>
+                        <Separator />
+
+                        <div className="rounded-none border border-dashed border-primary/40 bg-primary/5 p-4 text-sm text-muted-foreground">
+                            Use this section only when each value has a specific
+                            price and stock. Example: Red has different price/stock
+                            than Green.
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Type (choose only one)</Label>
+                            <Select value={overrideType} onValueChange={setOverrideType}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select one type (Size, Color...)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {variantTypes.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                            {type}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-3">
+                            {overrideValues.map((row) => (
+                                <div
+                                    key={row.id}
+                                    className="grid gap-3 rounded-none border border-border bg-secondary/30 p-4 md:grid-cols-[1.4fr_1fr_1fr_auto]"
+                                >
+                                    <div className="space-y-2">
+                                        <Label>Value</Label>
+                                        <Input
+                                            placeholder="e.g. Red, XL, 128GB"
+                                            value={row.value}
+                                            onChange={(e) =>
+                                                updateOverrideValueRow(
+                                                    row.id,
+                                                    "value",
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
                                     </div>
-                                    <h2 className="text-base font-medium text-foreground">
-                                        Product Images
-                                    </h2>
-                                </div>
-                                <Separator className="mb-5" />
 
-                                <div className="border-2 border-dashed border-border rounded-none p-8 text-center hover:border-primary/40 transition-colors cursor-pointer">
-                                    <div className="flex flex-col items-center gap-3">
-                                        <div className="grid size-12 place-items-center rounded-none bg-secondary text-muted-foreground">
-                                            <CloudArrowUp className="size-6" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-medium text-foreground">
-                                                Drop images here or click to
-                                                upload
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                PNG, JPG or WEBP up to 5MB each
-                                            </p>
-                                        </div>
+                                    <div className="space-y-2">
+                                        <Label>Specific price</Label>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            value={row.price}
+                                            onChange={(e) =>
+                                                updateOverrideValueRow(
+                                                    row.id,
+                                                    "price",
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Specific stock</Label>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            placeholder="0"
+                                            value={row.stock}
+                                            onChange={(e) =>
+                                                updateOverrideValueRow(
+                                                    row.id,
+                                                    "stock",
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="flex items-end">
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            size="sm"
-                                            className="gap-2"
+                                            className="rounded-none"
+                                            onClick={() => removeOverrideValueRow(row.id)}
+                                            disabled={overrideValues.length === 1}
                                         >
-                                            <Plus className="size-3.5" />
-                                            Add Images
+                                            <Trash className="size-4" />
                                         </Button>
                                     </div>
                                 </div>
+                            ))}
 
-                                <div className="mt-4 grid grid-cols-4 gap-3">
-                                    {[1, 2, 3, 4].map((i) => (
-                                        <div
-                                            key={i}
-                                            className="aspect-square rounded-none border border-border bg-secondary/50 flex items-center justify-center group relative overflow-hidden"
-                                        >
-                                            <ImageSquare className="size-6 text-muted-foreground" />
-                                            <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <Button
-                                                    type="button"
-                                                    variant="destructive"
-                                                    size="sm"
-                                                    className="size-8 p-0"
-                                                >
-                                                    <Trash className="size-3.5" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
+                            {/* Add the Value Row  */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="gap-2"
+                                onClick={addOverrideValueRow}
+                            >
+                                <Plus className="size-3.5" />
+                                Add Value Row
+                            </Button>
+                        </div>
+                    </div>
+
+
+                    {/* Variant Section 2 */}
+                    <div className="rounded-none border border-border bg-background/90 p-6 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <h2 className="text-base font-medium text-foreground">
+                                Variant Section 2 (Selection only)
+                            </h2>
+                            <Badge variant="secondary">Optional</Badge>
+                        </div>
+                        <Separator />
+
+                        <p className="text-sm text-muted-foreground">
+                            Choose other variant types here. This section is only
+                            for selectable values and cannot set specific price or
+                            stock.
+                        </p>
+
+                        <div className="flex flex-wrap gap-2">
+                            {variantTypes.map((type) => {
+                                // if the type is already selected in overrideType, do not allow selecting it here
+                                const selected = additionalTypes.includes(type);
+                                // if the type is same as overrideType, disable it
+                                const disabled = type === overrideType;
+
+                                return (
+                                    <button
+                                        key={type}
+                                        type="button"
+                                        onClick={() => toggleAdditionalType(type)}
+                                        disabled={disabled}
+                                        className={cn(
+                                            "rounded-none border px-3 py-1.5 text-sm transition-colors",
+                                            selected
+                                                ? "border-foreground bg-foreground text-background"
+                                                : "border-border bg-background text-foreground hover:bg-secondary/60",
+                                            disabled &&
+                                                "cursor-not-allowed border-muted bg-muted text-muted-foreground",
+                                        )}
+                                    >
+                                        {type}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {additionalTypes.length > 0 ? (
+                            <div className="space-y-3">
+                                {additionalTypes.map((type) => (
+                                    <div
+                                        key={type}
+                                        className="rounded-none border border-border bg-secondary/30 p-4 space-y-2"
+                                    >
+                                        <Label htmlFor={`additional-values-${type}`}>
+                                            {type} values
+                                        </Label>
+                                        <Input
+                                            id={`additional-values-${type}`}
+                                            placeholder="Enter values separated by comma"
+                                            value={additionalTypeValues[type] ?? ""}
+                                            onChange={(e) =>
+                                                updateAdditionalTypeValues(
+                                                    type,
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Example: Small, Medium, Large
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
+                    </div>
+
+                    <div className="rounded-none border border-border bg-background/90 p-6 shadow-sm space-y-4">
+                        <div className="flex items-center gap-2">
+                            <ImageSquare className="size-5 text-primary" />
+                            <h2 className="text-base font-medium text-foreground">
+                                Product Images
+                            </h2>
+                        </div>
+                        <Separator />
+
+                        <div className="rounded-none border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary/40">
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="grid size-12 place-items-center rounded-none bg-secondary text-muted-foreground">
+                                    <CloudArrowUp className="size-6" />
                                 </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-foreground">
+                                        Upload product images
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        PNG, JPG or WEBP up to 5MB each
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="gap-2"
+                                    onClick={() => imageInputRef.current?.click()}
+                                >
+                                    <Plus className="size-3.5" />
+                                    Add Images
+                                </Button>
+                                <input
+                                    ref={imageInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={handleImageChange}
+                                />
                             </div>
                         </div>
 
-                        {/* Right Column - Pricing & Inventory */}
-                        <div className="space-y-6">
-                            {/* Pricing */}
-                            <div className="rounded-none border border-border bg-background/90 p-6 shadow-sm">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="grid size-8 place-items-center rounded-none bg-primary/10 text-primary">
-                                        <CurrencyDollar
-                                            className="size-4"
-                                            weight="fill"
-                                        />
-                                    </div>
-                                    <h2 className="text-base font-medium text-foreground">
-                                        Pricing
-                                    </h2>
-                                </div>
-                                <Separator className="mb-5" />
-
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="price">Price *</Label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                                                $
-                                            </span>
-                                            <Input
-                                                id="price"
-                                                type="number"
-                                                step="0.01"
-                                                placeholder="0.00"
-                                                value={data.price}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "price",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className="pl-7 transition-all focus:ring-2 focus:ring-primary/20"
-                                            />
-                                        </div>
-                                        {errors.price && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.price}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="compare_price">
-                                            Compare-at price
-                                        </Label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                                                $
-                                            </span>
-                                            <Input
-                                                id="compare_price"
-                                                type="number"
-                                                step="0.01"
-                                                placeholder="0.00"
-                                                value={data.compare_price}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "compare_price",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className="pl-7 transition-all focus:ring-2 focus:ring-primary/20"
-                                            />
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Original price to show as
-                                            strikethrough
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Inventory */}
-                            <div className="rounded-none border border-border bg-background/90 p-6 shadow-sm">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="grid size-8 place-items-center rounded-none bg-primary/10 text-primary">
-                                        <Package
-                                            className="size-4"
-                                            weight="fill"
-                                        />
-                                    </div>
-                                    <h2 className="text-base font-medium text-foreground">
-                                        Inventory
-                                    </h2>
-                                </div>
-                                <Separator className="mb-5" />
-
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="sku">
-                                            SKU (Stock Keeping Unit)
-                                        </Label>
-                                        <Input
-                                            id="sku"
-                                            type="text"
-                                            placeholder="e.g. WH-1000XM5"
-                                            value={data.sku}
-                                            onChange={(e) =>
-                                                setData("sku", e.target.value)
-                                            }
-                                            className="transition-all focus:ring-2 focus:ring-primary/20"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="quantity">
-                                            Quantity *
-                                        </Label>
-                                        <Input
-                                            id="quantity"
-                                            type="number"
-                                            placeholder="0"
-                                            value={data.quantity}
-                                            onChange={(e) =>
-                                                setData(
-                                                    "quantity",
-                                                    e.target.value
-                                                )
-                                            }
-                                            className="transition-all focus:ring-2 focus:ring-primary/20"
-                                        />
-                                        {errors.quantity && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.quantity}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="rounded-none border border-border bg-secondary/40 p-4">
-                                <p className="text-xs text-muted-foreground mb-4">
-                                    Make sure all required fields (*) are filled
-                                    before publishing.
-                                </p>
-                                <div className="flex gap-3">
-                                    <Button
-                                        type="submit"
-                                        className="flex-1 gap-2"
-                                        disabled={processing}
+                        {data.images.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                {data.images.map((file, index) => (
+                                    <div
+                                        key={`${file.name}-${index}`}
+                                        className="rounded-none border border-border bg-secondary/40 p-3 text-xs text-muted-foreground"
                                     >
-                                        {processing ? (
-                                            <span className="flex items-center gap-2">
-                                                <span className="size-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                                                Publishing...
-                                            </span>
-                                        ) : (
-                                            <>
-                                                <Package className="size-4" />
-                                                Publish Product
-                                            </>
-                                        )}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="flex-1"
-                                    >
-                                        Save as Draft
-                                    </Button>
-                                </div>
+                                        <p className="truncate">{file.name}</p>
+                                    </div>
+                                ))}
                             </div>
+                        ) : null}
+                    </div>
+
+                    <div className="rounded-none border border-border bg-secondary/40 p-4">
+                        <p className="mb-4 text-xs text-muted-foreground">
+                            Submit when product title, description, base price,
+                            and stock are ready.
+                        </p>
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <Button type="submit" className="flex-1" disabled={processing}>
+                                {processing ? "Saving..." : "Save Product"}
+                            </Button>
+                            <Button type="button" variant="outline" className="flex-1">
+                                Save as Draft
+                            </Button>
                         </div>
                     </div>
                 </form>

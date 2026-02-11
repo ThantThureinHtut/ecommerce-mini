@@ -29,8 +29,6 @@ export default function SellerDashboard() {
     const handleProtectedAction = () => {
         if (!user || !isSeller) {
             setShowAuthAlert(true);
-        } else {
-            // TODO: Navigate to the respective page when routes are ready
         }
     };
 
@@ -93,13 +91,18 @@ export default function SellerDashboard() {
                                 your business — all in one place.
                             </p>
                             <div className="flex flex-wrap gap-3 mt-2">
-                                <Button
-                                    className="px-6 text-base py-5 gap-2"
-                                    onClick={handleProtectedAction}
-                                >
-                                    <Plus className="size-4" weight="bold" />
-                                    Add Product
-                                </Button>
+                                <Link href={showAuthAlert ? "" : route('add-product.dashboard')} >
+                                    <Button
+                                        className="px-6 text-base py-5 gap-2"
+                                        onClick={handleProtectedAction}
+                                    >
+                                        <Plus
+                                            className="size-4"
+                                            weight="bold"
+                                        />
+                                        Add Product
+                                    </Button>
+                                </Link>
                                 <Button
                                     variant="outline"
                                     className="px-6 text-base py-5 gap-2"

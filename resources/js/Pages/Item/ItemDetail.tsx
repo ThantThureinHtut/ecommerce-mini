@@ -40,9 +40,8 @@ import {
     AlertDialogTrigger,
 } from "@/Components/ui/alert-dialog";
 import { RadioGroup, RadioGroupItem } from "@/Components/ui/radio-group";
-import { usePage } from "@inertiajs/react";
+import { router, useForm, usePage } from "@inertiajs/react";
 import { Variant, Product } from "@/types";
-import type { EmblaCarouselType } from "embla-carousel";
 import { Label } from "@/Components/ui/label";
 import axios from "axios";
 
@@ -50,63 +49,84 @@ export default function ItemDetail({ item }: { item: Product }) {
     const rating = item?.ratings_count ?? 0 / 5;
     const reviewCount = item?.ratings_count ?? 0;
     const filledStars = Math.round(rating);
+    const [processing, setProcessing] = useState(false);
     const [priceAndQuantity, setPriceAndQuantity] = useState<{
         price: number;
         quantity: number;
     }>({ price: 0, quantity: 1 });
+
+    // Track selected quantity
+    const [selectedQuantityValue, setselectedQuantityValue] =
+        useState<number>(0);
+
+    // Track selected variant for each product type
     const [selectedVariantIndex, setSelectedVariantIndex] = useState<
         Record<number, number>
     >({});
-    const images = [
-        {
-            src: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80",
-            alt: "Minimal outfit on display",
-        },
-        {
-            src: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80",
-            alt: "Fabric detail",
-        },
-        {
-            src: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=600&q=80",
-            alt: "Side profile view",
-        },
-        {
-            src: "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=600&q=80",
-            alt: "Packaging close-up",
-        },
-    ];
+
     const { auth } = usePage().props;
     const user = auth.user;
+    const images = item?.productimages;
+    const validImages = images.filter(
+        (image) =>
+            typeof image?.image_url === "string" && image.image_url.trim(),
+    );
     const isUser = auth.isUser;
-    const formSubmitHandler = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-    };
     const handleVariantChange = (
-        variantId: number,
+        productId: number,
         selectedValueId: string,
     ) => {
         setSelectedVariantIndex((prev) => ({
             ...prev,
-            [variantId]: Number(selectedValueId),
+            [productId]: Number(selectedValueId),
         }));
     };
+
+    const AddCartAndOrderHandler = (
+        e: React.MouseEvent<HTMLButtonElement>,
+        routeName: string,
+    ) => {
+        e.preventDefault();
+        let is_variant = item.variants.length > 0 ? true : false;
+        let variant_main_count = item.variants.length;
+        let user_selected_variant_count =
+            Object.keys(selectedVariantIndex).length;
+        if (is_variant) {
+            if (variant_main_count !== user_selected_variant_count) {
+                alert("Please select all variants");
+                return;
+            }
+        }
+        router.post(route(routeName), {
+            user_id: user.id,
+            product_id: item.id,
+            variant_id: selectedVariantIndex,
+            price: priceAndQuantity.price,
+            qty: selectedQuantityValue,
+        }, {
+            preserveScroll: true,
+            // Start processing state before the request is sent
+            onStart: () => setProcessing(true),
+            // Reset processing state after the request finishes (success or error)
+            onFinish: () => setProcessing(false),
+        });
+    };
+
+    // Update price and quantity when variant changes
     useEffect(() => {
         axios
             .post(`${import.meta.env.VITE_BACKEND_URL}/item/variant`, {
                 product_id: item?.id,
-                product_value_id: selectedVariantIndex[1] ?? null,
+                product_value_id: selectedVariantIndex ?? null,
             })
             .then((res) => {
                 setPriceAndQuantity({
                     price: res.data.selectItem?.price ?? item?.base_price,
-                    quantity: res.data.selectItem?.quantity ?? item?.stock,
+                    quantity: res.data.selectItem?.stock ?? item?.stock,
                 });
-                console.log("Result", res);
             });
     }, [selectedVariantIndex]);
 
-    console.log(item);
-    console.log("Selected Variant", selectedVariantIndex);
     return (
         <GuestLayout>
             <section className="relative overflow-hidden rounded-none border border-border bg-secondary/40">
@@ -124,17 +144,27 @@ export default function ItemDetail({ item }: { item: Product }) {
                         <div className="relative lg:max-w-xl  rounded-none border border-border bg-background/90 shadow-sm">
                             <Carousel>
                                 <CarouselContent>
-                                    {images.map((image, index) => (
-                                        <CarouselItem key={image.src}>
-                                            <div className="aspect-[4/5] w-full overflow-hidden bg-gradient-to-br from-muted/30 via-muted/60 to-muted">
-                                                <img
-                                                    src={image.src}
-                                                    alt={image.alt}
-                                                    className="h-full w-full object-cover"
-                                                />
+                                    {validImages.length > 0 ? (
+                                        validImages.map((image) => (
+                                            <CarouselItem key={image.id}>
+                                                <div className="aspect-[4/5] w-full overflow-hidden bg-gradient-to-br from-muted/30 via-muted/60 to-muted">
+                                                    <img
+                                                        src={image.image_url}
+                                                        alt={item.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                </div>
+                                            </CarouselItem>
+                                        ))
+                                    ) : (
+                                        <CarouselItem>
+                                            <div className="grid aspect-[4/5] w-full place-items-center bg-gradient-to-br from-muted/30 via-muted/60 to-muted px-6 text-center">
+                                                <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                                                    No image
+                                                </span>
                                             </div>
                                         </CarouselItem>
-                                    ))}
+                                    )}
                                 </CarouselContent>
                                 <CarouselPrevious />
                                 <CarouselNext />
@@ -144,27 +174,33 @@ export default function ItemDetail({ item }: { item: Product }) {
                         </div>
 
                         <div className="grid grid-cols-4 gap-3">
-                            {images.slice(1).map((image, index) => (
-                                <button
-                                    key={image.src}
-                                    type="button"
-                                    className="group relative overflow-hidden rounded-none border border-border bg-background"
-                                    aria-label={`View ${image.alt}`}
-                                >
-                                    <div className="aspect-[4/5] w-full overflow-hidden">
-                                        <img
-                                            src={image.src}
-                                            alt={image.alt}
-                                            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                                        />
-                                    </div>
-                                    {index === 2 ? (
-                                        <span className="absolute inset-0 grid place-items-center bg-foreground/70 text-[10px] font-semibold uppercase tracking-[0.3em] text-background">
-                                            +6
-                                        </span>
-                                    ) : null}
-                                </button>
-                            ))}
+                            {validImages.length > 0 ? (
+                                validImages.slice(1).map((image, index) => (
+                                    <button
+                                        key={image.image_url}
+                                        type="button"
+                                        className="group relative overflow-hidden rounded-none border border-border bg-background"
+                                        aria-label={`View ${image.image_url}`}
+                                    >
+                                        <div className="aspect-[4/5] w-full overflow-hidden">
+                                            <img
+                                                src={image.image_url}
+                                                alt={item.name}
+                                                className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                                            />
+                                        </div>
+                                        {index === 2 ? (
+                                            <span className="absolute inset-0 grid place-items-center bg-foreground/70 text-[10px] font-semibold uppercase tracking-[0.3em] text-background">
+                                                +6
+                                            </span>
+                                        ) : null}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="col-span-4 grid aspect-[4/1] place-items-center rounded-none border border-dashed border-border bg-muted/20 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                                    No image
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -227,11 +263,9 @@ export default function ItemDetail({ item }: { item: Product }) {
                             Ships in 24 hours • Free returns within 30 days •
                             Eco-friendly packaging
                         </div>
-                        <form
-                            onSubmit={formSubmitHandler}
-                            action=""
-                            className="flex flex-col justify-center gap-4"
-                        >
+
+                        {/* Add to Cart Form */}
+                        <form className="flex flex-col justify-center gap-4">
                             <div className="w-full lg:max-w-lg pb-5 border-b border-border">
                                 <FieldGroup>
                                     <FieldSet>
@@ -265,6 +299,7 @@ export default function ItemDetail({ item }: { item: Product }) {
                                                     )?.name ?? "None"}
                                                 </FieldDescription>
 
+                                                {/* Choose Variant */}
                                                 <RadioGroup
                                                     value={
                                                         selectedVariantIndex[
@@ -313,7 +348,13 @@ export default function ItemDetail({ item }: { item: Product }) {
                             </div>
 
                             <div>
-                                <Select>
+                                <Select
+                                    onValueChange={(value) => {
+                                        setselectedQuantityValue(
+                                            Number(value) + 1,
+                                        );
+                                    }}
+                                >
                                     <SelectTrigger className="w-[180px] text-sm py-4">
                                         <SelectValue
                                             placeholder={"Quantity 1"}
@@ -321,7 +362,9 @@ export default function ItemDetail({ item }: { item: Product }) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {Array.from({
-                                            length: Number(priceAndQuantity.quantity),
+                                            length: Number(
+                                                priceAndQuantity.quantity,
+                                            ),
                                         }).map((_, index) => (
                                             <SelectItem
                                                 value={`${index}`}
@@ -337,11 +380,27 @@ export default function ItemDetail({ item }: { item: Product }) {
                             {/* Add Cart And Buy now */}
                             {user && isUser ? (
                                 <div className="flex gap-4">
-                                    <Button className="rounded-none border border-border p-5 text-xs flex-1">
+                                    <Button
+                                        className="rounded-none border border-border p-5 text-xs flex-1"
+                                        onClick={(e) =>
+                                            AddCartAndOrderHandler(
+                                                e,
+                                                "cart.store",
+                                            )
+                                        }
+                                        disabled={processing}
+                                    >
                                         Add Cart
                                     </Button>
                                     <Button
                                         variant={"outline"}
+                                        onClick={(e) =>
+                                            AddCartAndOrderHandler(
+                                                e,
+                                                "order.store",
+                                            )
+                                        }
+                                        disabled={processing}
                                         className="rounded-none border border-border p-5 text-xs flex-1"
                                     >
                                         Buy Now

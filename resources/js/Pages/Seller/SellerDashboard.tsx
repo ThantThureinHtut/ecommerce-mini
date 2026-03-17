@@ -91,7 +91,13 @@ export default function SellerDashboard() {
                                 your business — all in one place.
                             </p>
                             <div className="flex flex-wrap gap-3 mt-2">
-                                <Link href={showAuthAlert ? "" : route('add-product.dashboard')} >
+                                <Link
+                                    href={
+                                        showAuthAlert
+                                            ? ""
+                                            : route("add-product.dashboard")
+                                    }
+                                >
                                     <Button
                                         className="px-6 text-base py-5 gap-2"
                                         onClick={handleProtectedAction}
@@ -103,14 +109,22 @@ export default function SellerDashboard() {
                                         Add Product
                                     </Button>
                                 </Link>
-                                <Button
-                                    variant="outline"
-                                    className="px-6 text-base py-5 gap-2"
-                                    onClick={handleProtectedAction}
+                                <Link
+                                    href={
+                                        showAuthAlert
+                                            ? ""
+                                            : route("order-view.dashboard")
+                                    }
                                 >
-                                    <ClipboardText className="size-4" />
-                                    View Orders
-                                </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="px-6 text-base py-5 gap-2"
+                                        onClick={handleProtectedAction}
+                                    >
+                                        <ClipboardText className="size-4" />
+                                        View Orders
+                                    </Button>
+                                </Link>
                             </div>
                         </div>
 

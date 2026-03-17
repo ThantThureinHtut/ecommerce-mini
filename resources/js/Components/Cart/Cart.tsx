@@ -1,12 +1,124 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/Components/ui/button";
 import { CartItem } from "@/types";
-export default function Cart({ item }: { item: CartItem }) {
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogMedia,
+    AlertDialogTitle,
+} from "@/Components/ui/alert-dialog";
+import axios from "axios";
+import { Link } from "@inertiajs/react";
+type Variant = {
+    [key: string]: string | null;
+};
+export default function Cart({
+    item,
+    variant,
+}: {
+    item: CartItem;
+    variant: Variant;
+}) {
+    const [qty, setQty] = useState<number>(item.qty);
+    const [showAuthAlert, setShowAuthAlert] = useState(false);
+    console.log(item);
+    const quantityHandler = (value: string) => {
+        if (value === "increment") {
+            setQty((prev) => prev + 1);
+        } else if (value === "decrement") {
+            setQty((prev) => {
+                if (prev > 1) {
+                    return prev - 1;
+                } else {
+                    setShowAuthAlert(true);
+                }
+                return prev;
+            });
+        }
+    };
+    useEffect(() => {
+        const interval = setTimeout(() => {
+            axios.post(`${import.meta.env.VITE_BACKEND_URL}/cart/update`, {
+                item_id: item.id,
+                product_id: item.product_id,
+                variant: variant,
+                quantity: qty,
+            });
+        }, 500);
+        return () => clearTimeout(interval);
+    }, [qty]);
     return (
         <div
             key={item.id}
             className="rounded-none border border-border bg-background/90 p-4 shadow-sm"
         >
+            <AlertDialog open={showAuthAlert} onOpenChange={setShowAuthAlert}>
+                <AlertDialogContent
+                    size="default"
+                    className="max-w-lg gap-6 border border-border bg-background p-6 shadow-2xl sm:p-7"
+                >
+                    <AlertDialogHeader className="gap-4 sm:grid-cols-[88px_minmax(0,1fr)] sm:items-start sm:text-left">
+                        <AlertDialogMedia className="mb-0 size-[88px] overflow-hidden border border-border bg-muted/40">
+                            <img
+                                src={item.image}
+                                alt={item.name}
+                                className="h-full w-full object-cover"
+                            />
+                        </AlertDialogMedia>
+                        <div className="space-y-3">
+                            <AlertDialogTitle className="text-xl font-semibold leading-tight text-foreground">
+                                Remove this item from your cart?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="text-sm leading-6 text-muted-foreground">
+                                This will remove{" "}
+                                <span className="font-medium text-foreground">
+                                    {item.name}
+                                </span>
+                                {variant
+                                    ? ` (${Object.values(variant)
+                                          .filter(Boolean)
+                                          .join(", ")})`
+                                    : ""}{" "}
+                                from your cart.
+                            </AlertDialogDescription>
+                            <div className="rounded-none border border-border bg-muted/30 px-4 py-3 text-sm">
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="text-muted-foreground">
+                                        Current quantity
+                                    </span>
+                                    <span className="font-medium text-foreground">
+                                        {qty}
+                                    </span>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between gap-3">
+                                    <span className="text-muted-foreground">
+                                        Total
+                                    </span>
+                                    <span className="font-semibold text-foreground">
+                                        ${(item.price * qty).toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-3 sm:grid sm:grid-cols-2">
+                        <AlertDialogCancel className="h-11 w-full border-border text-sm font-medium">
+                            Keep item
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            asChild
+                            className="h-11 w-full bg-red-600 text-sm font-medium text-white hover:bg-red-700"
+                        >
+                            <Link method="post" href={route('cart.remove', { item_id: item.id })}>Yes</Link>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 <div className="relative w-full max-w-[130px] overflow-hidden rounded-none border border-border bg-muted/40">
                     <div className="aspect-[4/5] w-full">
@@ -29,34 +141,45 @@ export default function Cart({ item }: { item: CartItem }) {
                             </p>
                         </div>
                         <span className="text-sm font-semibold text-foreground">
-                            ${(item.price * item.qty).toFixed(2)}
+                            ${(item.price * qty).toFixed(2)}
                         </span>
                     </div>
 
                     <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        <span className="rounded-none border border-border bg-muted/60 px-2 py-1">
-                            Color: {item.color}
-                        </span>
-                        <span className="rounded-none border border-border bg-muted/60 px-2 py-1">
-                            Size: {item.size}
-                        </span>
+                        {Object.entries(variant).map(([key, value]) => (
+                            <span
+                                key={key}
+                                className={`rounded-none border border-border bg-muted/60 px-2 py-1 ${value || "hidden"}`}
+                            >
+                                {value ? `${key}: ${value}` : ``}
+                            </span>
+                        ))}
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon-xs">
+                            <Button
+                                variant="outline"
+                                size="icon-xs"
+                                onClick={() => quantityHandler("decrement")}
+                            >
                                 -
                             </Button>
                             <span className="text-xs text-muted-foreground">
-                                Qty {item.qty}
+                                Qty {qty}
                             </span>
-                            <Button variant="outline" size="icon-xs">
+                            <Button
+                                variant="outline"
+                                size="icon-xs"
+                                onClick={() => quantityHandler("increment")}
+                            >
                                 +
                             </Button>
                         </div>
                         <Button
                             size="lg"
                             className="border border-red-500 bg-background text-red-500 hover:bg-red-500/20 "
+                            onClick={() => setShowAuthAlert(true)}
                         >
                             Remove
                         </Button>

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\ProductType;
 use App\Models\ProductValue;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ProductController extends Controller
@@ -25,6 +27,8 @@ class ProductController extends Controller
 
             'types' => ['nullable', 'array'],
             'types.*' => ['nullable', 'string'],
+            'images' => ['nullable', 'array'],
+            'images.*' => ['nullable', 'image', 'max:2048'],
 
             // Section 1 (one type with specific price/stock)
             'overrideType' => ['nullable', 'string'],
@@ -58,6 +62,20 @@ class ProductController extends Controller
             'stock' => $validated['stock'],
             'seller_id' => $sellerId,
         ]);
+
+        // Image Store
+        if ($request->hasFile('images')) {
+            $files = $request->file('images');
+            foreach ($files as $file) {
+                $file_name = uniqid() . '-' . $file->getClientOriginalName();
+                $file_path = Storage::disk('public')->putFileAs('images', $file, $file_name);
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'image_url' => $file_path
+                ]);
+            }
+
+        }
 
 
         foreach ($validated['types'] ?? [] as $typeName) {
@@ -137,6 +155,6 @@ class ProductController extends Controller
             }
         }
         // Handle product creation logic here
-        return redirect()->back();
+        return redirect()->route('seller.dashboard');
     }
 }

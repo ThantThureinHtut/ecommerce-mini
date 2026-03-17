@@ -25,6 +25,7 @@ export default function Item({
     className,
     onAddToCart,
 }: ItemProps) {
+    const validImages = imageSrc && imageSrc.trim() !== "";
     const clampedRating = Math.max(0, Math.min(5, rating));
     const filledStars = Math.round(clampedRating);
     return (
@@ -44,10 +45,10 @@ export default function Item({
                     </Badge>
                 ) : null}
                 <div className="flex aspect-[5/5] items-center justify-center overflow-hidden bg-gradient-to-b from-background to-muted/60">
-                    {imageSrc ? (
+                    {validImages ? (
                         <img
                             src={imageSrc}
-                            alt={name}
+                            alt={imageSrc}
                             loading="lazy"
                             className="h-full w-full object-cover transition duration-300 group-hover/item:scale-[1.03]"
                         />

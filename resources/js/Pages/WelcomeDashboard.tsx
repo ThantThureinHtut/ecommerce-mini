@@ -12,6 +12,7 @@ dayjs.extend(relativeTime);
 const Item = lazy(() => import("@/Components/Item/Item"));
 
 type Products = Product[];
+
 export default function WelcomeDashboard({ products }: { products: Products }) {
     return (
         <GuestLayout>
@@ -69,7 +70,9 @@ export default function WelcomeDashboard({ products }: { products: Products }) {
                             >
                                 <Item
                                     name={product.name}
-                                    price={product.price}
+                                    price={product.base_price}
+                                    reviewCount={product.ratings_count}
+                                    imageSrc={product.productimages[0]?.image_url}
                                     badge={
                                         dayjs(product.created_at).format(
                                             "HH:mm",

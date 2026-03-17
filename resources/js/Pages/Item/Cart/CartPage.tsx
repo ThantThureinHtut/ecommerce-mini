@@ -7,43 +7,30 @@ import { Separator } from "@/Components/ui/separator";
 import { Link } from "@inertiajs/react";
 import CartFallback from "@/Components/Cart/CartFallback";
 const Cart = lazy(() => import("@/Components/Cart/Cart"));
-export default function CartPage() {
-    const cartItems = [
-        {
-            id: 1,
-            name: "Softline Daypack",
-            detail: "Weatherproof canvas, matte hardware",
-            color: "Stone",
-            size: "One size",
-            price: 189,
-            qty: 1,
-            image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: 2,
-            name: "Studio Knit Tee",
-            detail: "Breathable cotton, relaxed fit",
-            color: "Ink",
-            size: "M",
-            price: 64,
-            qty: 2,
-            image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80",
-        },
-        {
-            id: 3,
-            name: "Daylight Slides",
-            detail: "Cushioned footbed, non-slip sole",
-            color: "Clay",
-            size: "41",
-            price: 72,
-            qty: 1,
-            image: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=800&q=80",
-        },
-    ];
+export default function CartPage({ items }: { items?: any[] }) {
+    const cartItems = (items ?? []).map((item) => {
+        return {
+            id: item.id,
+            product_id: item.product.id,
+            name: item.product.name,
+            detail: item.product.details,
+            price: item.price,
+            qty: item.qty,
+            image: item.product.productimages[0]?.image_url || "",
+        };
+    });
+    console.log(items);
+    const variant = (items ?? []).map((item) => {
+        return {
+            [item.cart_item_variants[0]?.product_value.product_type?.name || "N/A"]: item.cart_item_variants[0]?.product_value.name || "",
+            [item.cart_item_variants[1]?.product_value.product_type?.name || "N/A"
+            ]: item.cart_item_variants[1]?.product_value.name || "",
+        };
+    });
 
     const subtotal = cartItems.reduce(
-        (total, item) => total + item.price * item.qty,
-        0
+        (total, item) => total + Number(item.price) * item.qty,
+        0,
     );
     const shipping = subtotal >= 200 ? 0 : 12;
     const tax = subtotal * 0.06;
@@ -85,7 +72,7 @@ export default function CartPage() {
                 <div className="space-y-4 cart-enter-items">
                     {cartItems.map((item) => (
                         <Suspense key={item.id} fallback={<CartFallback />}>
-                            <Cart item={item} key={item.id} />
+                            <Cart item={item} key={item.id} variant={variant[cartItems.indexOf(item)]} />
                         </Suspense>
                     ))}
 
@@ -145,19 +132,6 @@ export default function CartPage() {
                                 Continue shopping
                             </Button>
                         </Link>
-                    </div>
-
-                    <div className="rounded-none border border-border bg-secondary/40 p-4">
-                        <p className="text-xs text-muted-foreground">
-                            Have a promo code? Apply it before checkout for a
-                            smoother total.
-                        </p>
-                        <div className="mt-3 flex gap-2">
-                            <Input placeholder="Promo code" className="h-9" />
-                            <Button variant="outline" className="h-9 px-4">
-                                Apply
-                            </Button>
-                        </div>
                     </div>
                 </aside>
             </section>

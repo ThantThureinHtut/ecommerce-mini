@@ -6,6 +6,7 @@ import {
     MoonStarsIcon,
     PackageIcon,
     ShoppingCartIcon,
+    SignOutIcon,
     SunDimIcon,
 } from "@phosphor-icons/react";
 import { Link, usePage } from "@inertiajs/react";
@@ -35,6 +36,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
 
 import { useTheme } from "@/src/Content/ThemeProvider";
 import { Separator } from "./ui/separator";
+import { LogIcon } from "@phosphor-icons/react/dist/ssr";
 
 type NavItem = { label: string; icon: any; href: string };
 
@@ -43,12 +45,17 @@ const nav: NavItem[] = [
     {
         label: "Cart",
         icon: <ShoppingCartIcon />,
-        href: route("cart.dashboard", 2),
+        href: route("cart.dashboard"),
     },
     {
         label: "To Ship",
         icon: <PackageIcon />,
-        href: route("order.dashboard", 2),
+        href: route("order.dashboard"),
+    },
+    {
+        label: "Logout",
+        icon: <SignOutIcon />,
+        href: route("logout"),
     },
 ];
 
@@ -93,8 +100,17 @@ export default function Header() {
                             <DropdownMenuContent>
                                 <DropdownMenuLabel>Account</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>Profile</DropdownMenuItem>
-                                <DropdownMenuItem>History</DropdownMenuItem>
+                                <Link href={route("profile.edit")} className="w-full">
+                                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                                </Link>
+                                <Link
+                                    href={`${route("profile.edit")}#password-security`}
+                                    className="w-full"
+                                >
+                                    <DropdownMenuItem>
+                                        Change password
+                                    </DropdownMenuItem>
+                                </Link>
                                 <Link
                                     href={route("logout")}
                                     method="post"
@@ -108,13 +124,17 @@ export default function Header() {
                 )}
 
                 {/* Shopping Cart */}
-                <Link href={route("cart.dashboard", 2)}>
-                    <ShoppingCartIcon className="size-6 text-primary" />
-                </Link>
-                <Separator orientation="vertical" />
-                <Link href={route("order.dashboard", 2)}>
-                    <PackageIcon className="size-6 text-primary" />
-                </Link>
+                {user && isUser && (
+                    <>
+                        <Link href={route("cart.dashboard", user.id)}>
+                            <ShoppingCartIcon className="size-6 text-primary" />
+                        </Link>
+                        <Separator orientation="vertical" />
+                        <Link href={route("order.dashboard", user.id)}>
+                            <PackageIcon className="size-6 text-primary" />
+                        </Link>
+                    </>
+                )}
                 <Separator orientation="vertical" />
                 {/* Dark Mode */}
                 <Button
@@ -135,44 +155,84 @@ export default function Header() {
                     <SheetContent>
                         <SheetHeader>
                             <SheetTitle>Menu</SheetTitle>
-                            <nav className="mt-6 flex flex-col gap-2">
-                                {nav.map((item) => (
+                            <SheetDescription className="sr-only">
+                                Browse navigation links and account actions.
+                            </SheetDescription>
+                            <div className="flex flex-col gap-5 mt-4">
+                                {/* Avatoar */}
+                                {user && isUser && (
                                     <Link
-                                        key={item.href}
-                                        href={item.href}
-                                        className={`rounded-md px-3 py-2 text-sm hover:bg-muted  ${
-                                            item.icon
-                                                ? "flex items-center gap-2"
-                                                : ""
-                                        }`}
+                                        href={route("profile.edit")}
+                                        className="group relative flex items-center gap-3 overflow-hidden rounded-none border border-border bg-background/60 px-3 py-3 transition-all duration-200 hover:border-primary hover:bg-primary/5"
                                     >
-                                        {item.icon && (
-                                            <span className="text-xl text-primary">
-                                                {item.icon}
-                                            </span>
-                                        )}
-                                        <span>{item.label}</span>
+                                        <Avatar className="size-14 ring-1 ring-border transition-all duration-200 group-hover:ring-primary/40">
+                                            <AvatarImage src="https://github.com/shadcn.png" />
+                                            <AvatarFallback>
+                                                {user.name?.slice(0, 2).toUpperCase() ??
+                                                    "US"}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-semibold text-foreground">
+                                                {user.name}
+                                            </p>
+                                            <p className="truncate text-xs text-muted-foreground">
+                                                {user.email}
+                                            </p>
+                                            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-primary">
+                                                Edit profile and password
+                                            </p>
+                                        </div>
                                     </Link>
-                                ))}
-                            </nav>
-                            <div className="mt-6 border-t pt-4 flex flex-col gap-2 justify-center">
-                                <Link
-                                    href="/login"
-                                    className="block rounded-md  text-sm"
-                                >
-                                    <Button className="w-full">Login</Button>
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    className="block rounded-md text-sm"
-                                >
-                                    <Button
-                                        variant={"outline"}
-                                        className="w-full"
-                                    >
-                                        Register
-                                    </Button>
-                                </Link>
+                                )}
+                                <Separator />
+                                {/* Navigation Links */}
+                                <nav className="mt-2 flex flex-col gap-2">
+                                    {nav.map((item) => (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            className={`rounded-md px-3 py-2 text-sm hover:bg-muted  ${
+                                                item.icon
+                                                    ? "flex items-center gap-2"
+                                                    : ""
+                                            }`}
+                                        >
+                                            {item.icon && (
+                                                <span className="text-xl text-primary">
+                                                    {item.icon}
+                                                </span>
+                                            )}
+                                            <span>{item.label}</span>
+                                        </Link>
+                                    ))}
+                                </nav>
+
+                                {/* Login/Register Buttons Mobile  */}
+                                {!user ||
+                                    (!isUser && (
+                                        <div className="mt-6 border-t pt-4 flex flex-col gap-2 justify-center">
+                                            <Link
+                                                href="/login"
+                                                className="block rounded-md  text-sm"
+                                            >
+                                                <Button className="w-full">
+                                                    Login
+                                                </Button>
+                                            </Link>
+                                            <Link
+                                                href="/register"
+                                                className="block rounded-md text-sm"
+                                            >
+                                                <Button
+                                                    variant={"outline"}
+                                                    className="w-full"
+                                                >
+                                                    Register
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    ))}
                             </div>
                         </SheetHeader>
                     </SheetContent>

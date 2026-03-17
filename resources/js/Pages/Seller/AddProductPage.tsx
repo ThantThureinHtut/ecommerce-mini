@@ -68,6 +68,7 @@ export default function AddProductPage() {
 
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const nextOverrideIdRef = useRef(2);
+    const [imageSizeError, setImageSizeError] = useState<string>("");
 
     const [overrideType, setOverrideType] = useState<string>("");
     const [overrideValues, setOverrideValues] = useState<VariantOverrideValue[]>([
@@ -113,7 +114,22 @@ export default function AddProductPage() {
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setData("images", Array.from(e.target.files ?? []));
+        const files = Array.from(e.target.files ?? []);
+        const maxSizeInBytes = 2 * 1024 * 1024;
+        const oversizedFiles = files.filter((file) => file.size > maxSizeInBytes);
+        const validFiles = files.filter((file) => file.size <= maxSizeInBytes);
+
+        if (oversizedFiles.length > 0) {
+            setImageSizeError(
+                `These files are over 2MB: ${oversizedFiles
+                    .map((file) => file.name)
+                    .join(", ")}.`,
+            );
+        } else {
+            setImageSizeError("");
+        }
+
+        setData("images", validFiles);
     };
 
 
@@ -500,7 +516,10 @@ export default function AddProductPage() {
                                         Upload product images
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        PNG, JPG or WEBP up to 5MB each
+                                        PNG, JPG or WEBP up to 2MB each
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Can't upload? Try reducing the file size or using a different image.
                                     </p>
                                 </div>
                                 <Button
@@ -522,6 +541,25 @@ export default function AddProductPage() {
                                 />
                             </div>
                         </div>
+                        {(imageSizeError || errors.images) && (
+                            <p className="text-xs text-destructive">
+                                {imageSizeError || errors.images}
+                            </p>
+                        )}
+                        {!imageSizeError &&
+                            Object.keys(errors).some((key) =>
+                                key.startsWith("images."),
+                            ) && (
+                                <p className="text-xs text-destructive">
+                                    {
+                                        errors[
+                                            Object.keys(errors).find((key) =>
+                                                key.startsWith("images."),
+                                            ) as keyof typeof errors
+                                        ]
+                                    }
+                                </p>
+                            )}
 
                         {data.images.length > 0 ? (
                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -543,10 +581,10 @@ export default function AddProductPage() {
                             and stock are ready.
                         </p>
                         <div className="flex flex-col gap-3 sm:flex-row">
-                            <Button type="submit" className="flex-1" disabled={processing}>
+                            <Button type="submit" className="flex-0 sm:flex-1" disabled={processing}>
                                 {processing ? "Saving..." : "Save Product"}
                             </Button>
-                            <Button type="button" variant="outline" className="flex-1">
+                            <Button type="button" variant="outline" className="flex-0 sm:flex-1">
                                 Save as Draft
                             </Button>
                         </div>

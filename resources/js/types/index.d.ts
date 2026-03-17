@@ -17,13 +17,14 @@ export type PageProps<
 
 export type CartItem = {
     id: number;
+    product_id: number ;
     image: string;
     name: string;
     detail: string;
     price: number;
     qty: number;
-    color: string;
-    size: string;
+    color?: string;
+    size?: string;
 };
 
 export interface OptionalValue {
@@ -60,6 +61,11 @@ export interface Review {
     review: string;
 }
 
+export interface Images {
+    id: number;
+    product_id: number;
+    image_url: string;
+}
 export type Product = {
     id: number;
     name: string;
@@ -71,6 +77,7 @@ export type Product = {
         phone_number: string;
         shop_name: string;
     };
+    productimages: Images[];
     reviews?: Review[];
     stocks_count: number;
     ratings_count: number;

@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string('order_number');
             $table->string('order_status')->default('placed');
             $table->decimal('total');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->timestamps();
         });

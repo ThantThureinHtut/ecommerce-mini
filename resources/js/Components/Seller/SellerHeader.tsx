@@ -116,6 +116,9 @@ export default function SellerHeader() {
                     <SheetContent>
                         <SheetHeader>
                             <SheetTitle>Menu</SheetTitle>
+                            <SheetDescription className="sr-only">
+                                Browse seller navigation and account actions.
+                            </SheetDescription>
                             <nav className="mt-6 flex flex-col gap-2">
                                 {nav.map((item) => (
                                     <Link

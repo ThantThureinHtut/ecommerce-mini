@@ -9,6 +9,7 @@ use App\Models\CartItemVariant;
 // use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -23,7 +24,12 @@ class CartController extends Controller
             // Transform image URLs for each product in the cart items
             foreach ($cartItems as $item) {
                 $item->product->productimages->transform(function ($image) {
-                    $image->image_url = Storage::url($image->image_url);
+                    $imagePath = $image->image_url;
+
+                    if (!str_starts_with($imagePath, '/storage/') && !filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                        $image->image_url = Storage::url($imagePath);
+                    }
+
                     return $image;
                 });
             }
@@ -33,51 +39,66 @@ class CartController extends Controller
     }
     public function store(Request $request)
     {
+        $selectedValueIds = collect($request->variant_id ?? [])
+            ->map(fn ($valueId) => (int) $valueId)
+            ->filter()
+            ->sort()
+            ->values();
 
-        // Check if the user already has a cart, if not create one
-        $cart = Cart::updateOrCreate([
-            'user_id' => Auth::user()->id,
-        ], [
-            'user_id' => Auth::user()->id
-        ]);
+        DB::transaction(function () use ($request, $selectedValueIds) {
+            // Check if the user already has a cart, if not create one
+            $cart = Cart::updateOrCreate([
+                'user_id' => Auth::user()->id,
+            ], [
+                'user_id' => Auth::user()->id
+            ]);
 
-        // Create a new cart item for the product being added to the cart
-        $items = CartItem::create(
-            [
+            $existingItem = CartItem::where('cart_id', $cart->id)
+                ->where('product_id', $request->product_id)
+                ->with('cartItemVariants')
+                ->get()
+                // this first() is collection method, not query builder method, so it will be executed in memory after fetching the data
+                // we need to use the (use ()) to pass the $selectedValueIds variable to the closure
+                // cuz we can't access the $selectedValueIds variable directly in the closure without passing it as a parameter
+                ->first(function ($cartItem) use ($selectedValueIds) {
+                    $existingValueIds = $cartItem->cartItemVariants
+                        ->pluck('value_id')
+                        ->map(fn ($valueId) => (int) $valueId)
+                        ->sort()
+                        ->values();
+
+                    return $existingValueIds->all() === $selectedValueIds->all();
+                });
+
+            if ($existingItem) {
+                $existingItem->increment('qty', (int) $request->qty);
+                return;
+            }
+
+            // Create a new cart item for a new product + variant combination
+            $item = CartItem::create([
                 'cart_id' => $cart->id,
                 'product_id' => $request->product_id,
                 'qty' => $request->qty,
-                'price' => (int)$request->price,
-            ]
-        );
+                'price' => (int) $request->price,
+            ]);
 
-        // Associate the selected product variants with the cart item
-        $values = array_values($request->variant_id);
-        foreach ($values as $value_id) {
-            CartItemVariant::updateOrCreate(
-                [
-                    'cart_item_id' => $items->id,
-                    'value_id' => $value_id,
-                ],
-                [
-                    'cart_item_id' => $items->id,
-                    'value_id' => $value_id,
-                ]
-            );
-        }
+            foreach ($selectedValueIds as $valueId) {
+                CartItemVariant::create([
+                    'cart_item_id' => $item->id,
+                    'value_id' => $valueId,
+                ]);
+            }
+        });
+
         return redirect()->route('welcome');
     }
 
     // TODO: Update Cart Item Quantity
     public function update(Request $request)
     {
-        logger($request->toArray());
-        // $product_stock = Product::where('id' , $request->product_id)->value('stock');
-        // $product_variant_is = ProductVariant::where('product_id', $request->product_id);
-        // $final_price = (int)$product_variant_is->first()->price * (int)$request->quantity;
         CartItem::where('id', $request->item_id)->update([
             'qty' => $request->quantity,
-            // 'price' => $final_price
         ]);
 
     }

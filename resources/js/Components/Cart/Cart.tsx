@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/Components/ui/button";
 import { CartItem } from "@/types";
 import {
@@ -12,21 +12,27 @@ import {
     AlertDialogMedia,
     AlertDialogTitle,
 } from "@/Components/ui/alert-dialog";
-import axios from "axios";
-import { Link } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
+
 type Variant = {
-    [key: string]: string | null;
+    [key:string] : string | null
 };
+
 export default function Cart({
     item,
     variant,
 }: {
     item: CartItem;
-    variant: Variant;
+    variant: Variant[] ;
 }) {
     const [qty, setQty] = useState<number>(item.qty);
+    const [confirmedQty, setConfirmedQty] = useState<number>(item.qty);
     const [showAuthAlert, setShowAuthAlert] = useState(false);
-    console.log(item);
+    const [showStockLimitAlert, setShowStockLimitAlert] = useState(false);
+    const [stockLimitMessage, setStockLimitMessage] = useState(
+        "You have reached the maximum available stock for this item.",
+    );
+    const latestRequestId = useRef(0);
     const quantityHandler = (value: string) => {
         if (value === "increment") {
             setQty((prev) => prev + 1);
@@ -34,24 +40,57 @@ export default function Cart({
             setQty((prev) => {
                 if (prev > 1) {
                     return prev - 1;
-                } else {
-                    setShowAuthAlert(true);
                 }
+                setShowAuthAlert(true);
                 return prev;
             });
         }
     };
+
     useEffect(() => {
-        const interval = setTimeout(() => {
-            axios.post(`${import.meta.env.VITE_BACKEND_URL}/cart/update`, {
+        if (qty === confirmedQty) {
+            return;
+        }
+
+    const timeout = setTimeout(() => {
+            latestRequestId.current += 1;
+            const requestId = latestRequestId.current;
+
+            router.post(route("cart.update"), {
                 item_id: item.id,
                 product_id: item.product_id,
                 variant: variant,
                 quantity: qty,
+            }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onSuccess: () => {
+                    if (requestId === latestRequestId.current) {
+                        setConfirmedQty(qty);
+                    }
+                },
+                onError: (errors) => {
+                    if (requestId !== latestRequestId.current) {
+                        return;
+                    }
+
+                    const fallbackMessage =
+                        "You have reached the maximum available stock for this item.";
+                    const serverMessage = Array.isArray(errors.quantity)
+                        ? errors.quantity[0]
+                        : errors.quantity;
+
+                    setStockLimitMessage(serverMessage || fallbackMessage);
+                    setShowStockLimitAlert(true);
+                    setQty(confirmedQty);
+                },
             });
         }, 500);
-        return () => clearTimeout(interval);
-    }, [qty]);
+
+        return () => clearTimeout(timeout);
+    }, [qty, confirmedQty, item.id, item.product_id, variant]);
+
     return (
         <div
             key={item.id}
@@ -114,11 +153,38 @@ export default function Cart({
                             asChild
                             className="h-11 w-full bg-red-600 text-sm font-medium text-white hover:bg-red-700"
                         >
-                            <Link method="post" href={route('cart.remove', { item_id: item.id })}>Yes</Link>
+                            <Link method="post" href={route("cart.remove", { item_id: item.id })}>
+                                Yes
+                            </Link>
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <AlertDialog
+                open={showStockLimitAlert}
+                onOpenChange={setShowStockLimitAlert}
+            >
+                <AlertDialogContent
+                    size="default"
+                    className="max-w-md gap-6 border border-border bg-background p-6 shadow-2xl sm:p-7"
+                >
+                    <AlertDialogHeader className="space-y-3 text-left">
+                        <AlertDialogTitle className="text-xl font-semibold leading-tight text-foreground">
+                            Stock limit reached
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-sm leading-6 text-muted-foreground">
+                            {stockLimitMessage}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction className="h-11 w-full text-sm font-medium">
+                            OK
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 <div className="relative w-full max-w-[130px] overflow-hidden rounded-none border border-border bg-muted/40">
                     <div className="aspect-[4/5] w-full">
@@ -146,14 +212,16 @@ export default function Cart({
                     </div>
 
                     <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        {Object.entries(variant).map(([key, value]) => (
-                            <span
+                        {variant.map((v) => {
+                           return Object.entries(v).map(([key, value]) => {
+                            return <span
                                 key={key}
                                 className={`rounded-none border border-border bg-muted/60 px-2 py-1 ${value || "hidden"}`}
                             >
                                 {value ? `${key}: ${value}` : ``}
                             </span>
-                        ))}
+                        })
+                        })}
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-3">

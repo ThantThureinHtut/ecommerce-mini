@@ -1,31 +1,39 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useRef, useState } from "react";
 import GuestLayout from "@/Layouts/GuestLayout";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
-import { Input } from "@/Components/ui/input";
 import { Separator } from "@/Components/ui/separator";
-import { Link } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 import CartFallback from "@/Components/Cart/CartFallback";
+import { Items, Product } from "@/types";
 const Cart = lazy(() => import("@/Components/Cart/Cart"));
-export default function CartPage({ items }: { items?: any[] }) {
+
+export default function CartPage({ items  , cart_id}: { items?: Items[] , cart_id: number}) {
+
+    const [processing, setProcessing] = useState(false);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const cartItems = (items ?? []).map((item) => {
         return {
             id: item.id,
             product_id: item.product.id,
             name: item.product.name,
             detail: item.product.details,
-            price: item.price,
+            price: Number(item.price),
             qty: item.qty,
             image: item.product.productimages[0]?.image_url || "",
         };
     });
-    console.log(items);
-    const variant = (items ?? []).map((item) => {
-        return {
-            [item.cart_item_variants[0]?.product_value.product_type?.name || "N/A"]: item.cart_item_variants[0]?.product_value.name || "",
-            [item.cart_item_variants[1]?.product_value.product_type?.name || "N/A"
-            ]: item.cart_item_variants[1]?.product_value.name || "",
-        };
+     console.log("main" , cartItems)
+    const variant = (items ?? []).map((item, index) => {
+        if (item.cart_item_variants.length > 0) {
+           return  item.cart_item_variants.map((variant, index) => {
+                return {
+                    [variant?.product_value.product_type
+                        ?.name || ""]:
+                        variant?.product_value.name || "",
+                };
+            });
+        }
     });
 
     const subtotal = cartItems.reduce(
@@ -36,6 +44,34 @@ export default function CartPage({ items }: { items?: any[] }) {
     const tax = subtotal * 0.06;
     const total = subtotal + shipping + tax;
 
+    const orderSubmitHandler = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        if (processing) return;
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
+        setProcessing(true);
+        timerRef.current = setTimeout(() => {
+            router.post(
+                route("order.store"),
+                {
+                    cartItems,
+                    variant,
+                    cart_id
+
+                },
+                {
+                    preserveScroll: true,
+                    onFinish: () => {
+                        setProcessing(false);
+                    },
+                    onSuccess: () => {
+                        router.visit(route("order.dashboard"));
+                    },
+                },
+            );
+        }, 500);
+    };
     return (
         <GuestLayout>
             <section className="relative overflow-hidden rounded-none border border-border bg-secondary/40 cart-enter">
@@ -70,11 +106,18 @@ export default function CartPage({ items }: { items?: any[] }) {
 
             <section className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_0.9fr] pb-4">
                 <div className="space-y-4 cart-enter-items">
-                    {cartItems.map((item) => (
-                        <Suspense key={item.id} fallback={<CartFallback />}>
-                            <Cart item={item} key={item.id} variant={variant[cartItems.indexOf(item)]} />
+                    {cartItems.map((item , index) => {
+                        if(!variant[index]) return null;
+                        return (
+                            <Suspense key={item.id} fallback={<CartFallback />}>
+                            <Cart
+                                item={item}
+                                variant={variant[index]}
+                            />
                         </Suspense>
-                    ))}
+                        )
+                    }
+                    )}
 
                     <div className="rounded-none border border-border bg-background/80 p-4 text-xs text-muted-foreground">
                         Free shipping on orders over $200. Easy returns within
@@ -124,7 +167,11 @@ export default function CartPage({ items }: { items?: any[] }) {
                             <span>Total</span>
                             <span>${total.toFixed(2)}</span>
                         </div>
-                        <Button className="mt-5 h-10 w-full">
+                        <Button
+                            className="mt-5 h-10 w-full"
+                            onClick={(e) => orderSubmitHandler(e)}
+                            disabled={processing}
+                        >
                             Proceed to checkout
                         </Button>
                         <Link href="/" className="mt-2 block">

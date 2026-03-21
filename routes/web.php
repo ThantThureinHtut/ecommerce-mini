@@ -13,11 +13,11 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    $products = Product::with('productimages' )->orderBy('id', 'desc')->get();
+    $products = Product::with('productimages')->orderBy('id', 'desc')->get();
     // Transform image URLs for each product
     // transform() only modifies the collection in place, so we don't need to assign it back to $products
     foreach ($products as $product) {
-       $product->productimages->transform(function ($image) {
+        $product->productimages->transform(function ($image) {
             $image->image_url = Storage::url($image->image_url);
             return $image;
         });
@@ -37,16 +37,19 @@ Route::get('/item/{name?}/{id}/detail', [ItemController::class, 'detail'])->name
 Route::post('/item/variant/', [ItemController::class, 'selectItem'])->name('item.variant');
 
 // Cart Page and OrderTracking
-Route::group(['prefix' => 'cart']  , function () {
+Route::group(['prefix' => 'cart'], function () {
     Route::get('/', [CartController::class, 'index'])->name('cart.dashboard');
     Route::post('/store', [CartController::class, 'store'])->name('cart.store');
     Route::post('/update', [CartController::class, 'update'])->name('cart.update');
     Route::post('/remove', [CartController::class, 'remove'])->name('cart.remove');
 });
 
+Route::group(['prefix' => 'order'], function () {
+    Route::get('/', [OrderController::class, 'index'])->name('order.dashboard');
+    Route::get('/{id}/tracking', [OrderController::class, 'tracking'])->name('order.tracking');
+    Route::post('/store' , [OrderController::class , 'store'])->name('order.store');
+});
 
-Route::get('/orders/', [OrderController::class, 'index'])->name('order.dashboard');
-Route::get('/orders/{id}/tracking', [OrderController::class, 'tracking'])->name('order.tracking');
 
 
 // OAuth Login , Register

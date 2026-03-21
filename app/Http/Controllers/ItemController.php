@@ -27,7 +27,6 @@ class ItemController extends Controller
     {
         foreach ($request->product_value_id as $product_value_id) {
             $selectItem = ProductVariant::where('product_id', $request->product_id)->where('product_value_id', $product_value_id)->first();
-            logger($selectItem);
             if (!is_null($selectItem)) {
                 return response()->json(['selectItem' => $selectItem]);
             }

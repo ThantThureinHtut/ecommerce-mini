@@ -66,6 +66,7 @@ export default function ItemDetail({ item }: { item: Product }) {
 
     const { auth } = usePage().props;
     const user = auth.user;
+    const variants = item.variants ?? [];
     const images = item?.productimages;
     const validImages = images.filter(
         (image) =>
@@ -87,8 +88,8 @@ export default function ItemDetail({ item }: { item: Product }) {
         routeName: string,
     ) => {
         e.preventDefault();
-        let is_variant = item.variants.length > 0 ? true : false;
-        let variant_main_count = item.variants.length;
+        let is_variant = variants.length > 0 ? true : false;
+        let variant_main_count = variants.length;
         let user_selected_variant_count =
             Object.keys(selectedVariantIndex).length;
         if (is_variant) {

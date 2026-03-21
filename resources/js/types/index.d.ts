@@ -71,7 +71,7 @@ export type Product = {
     name: string;
     details: string;
     base_price: string;
-    stock: number | null;
+    stock?: number | null;
     seller?: {
         id: number;
         phone_number: string;
@@ -79,11 +79,39 @@ export type Product = {
     };
     productimages: Images[];
     reviews?: Review[];
-    stocks_count: number;
+    stocks_count?: number;
     ratings_count: number;
     reviews_count: string;
-    variants: Variant[];
-    seller_id: number;
+    variants?: Variant[];
+    seller_id?: number;
     created_at: string;
     updated_at: string;
 };
+
+
+
+// Cart Page
+interface product_type {
+    id:number,
+    name:string
+}
+interface productValue  {
+    id:number,
+    name: string,
+    product_id: number,
+    product_type: product_type
+}
+interface cartItemVaraints  {
+    cart_item_id: number;
+    id:number;
+    product_value: productValue;
+}
+type Items  = {
+    id:number
+    cart_id: number ;
+    cart_item_variants: cartItemVaraints[];
+    price: string,
+    product: Product,
+    product_id: number,
+    qty: number,
+}

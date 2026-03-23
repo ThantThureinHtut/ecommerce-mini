@@ -7,13 +7,32 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class OrderController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        return Inertia::render('Item/Order/OrderPage');
+        $orders = Order::with(['product.productimages', 'ordervariants'])
+            ->where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if (isset($orders)) {
+            foreach ($orders as $order) {
+                $order->product->productimages->transform(function ($image) {
+                    $imagePath = $image->image_url;
+                    if (!str_starts_with($imagePath, '/storage/') && !filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                        $image->image_url = Storage::url($imagePath);
+                    }
+                    return $image;
+                });
+            }
+        }
+        return Inertia::render('Item/Order/OrderPage', [
+            'orders' => $orders,
+        ]);
     }
 
     public function tracking(Request $request)
@@ -22,8 +41,55 @@ class OrderController extends Controller
     }
     public function seller_order_index()
     {
-        return Inertia::render('Seller/Order/OrderViewPage');
+        $sellerId = Auth::user()?->seller?->id;
+
+        $orders = Order::with(['user', 'product.productimages', 'ordervariants'])
+            ->whereHas('product', function ($query) use ($sellerId) {
+                $query->where('seller_id', $sellerId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        foreach ($orders as $order) {
+            $order->product?->productimages?->transform(function ($image) {
+                $imagePath = $image->image_url;
+                if (!str_starts_with($imagePath, '/storage/') && !filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                    $image->image_url = Storage::url($imagePath);
+                }
+                return $image;
+            });
+        }
+
+        return Inertia::render('Seller/Order/OrderViewPage', [
+            'orders' => $orders,
+        ]);
     }
+    public function seller_order_detail($id)
+    {
+
+        $sellerId = Auth::user()?->seller?->id;
+
+        $order = Order::with(['user', 'product.productimages', 'ordervariants'])
+            ->where('id', $id)
+            ->whereHas('product', function ($query) use ($sellerId) {
+                $query->where('seller_id', $sellerId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+
+        $order->product?->productimages?->transform(function ($image) {
+            $imagePath = $image->image_url;
+            if (!str_starts_with($imagePath, '/storage/') && !filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                $image->image_url = Storage::url($imagePath);
+            }
+            return $image;
+        });
+
+
+        return Inertia::render('Seller/Order/OrderDetailPage', ['order' => $order]);
+    }
+
     public function store(Request $request)
     {
         $cartItems = $request->cartItems;
@@ -56,10 +122,9 @@ class OrderController extends Controller
                     }
                 }
             }
-            if(isset($cart)){
+            if (isset($cart)) {
                 $cart->delete();
             }
-
         });
 
         return back();

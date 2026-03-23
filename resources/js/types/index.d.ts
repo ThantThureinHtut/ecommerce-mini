@@ -5,6 +5,28 @@ export interface User {
     email_verified_at?: string;
 }
 
+export interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+export interface PaginatedData<T> {
+    current_page: number;
+    data: T[];
+    first_page_url: string;
+    from: number | null;
+    last_page: number;
+    last_page_url: string;
+    links: PaginationLink[];
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number | null;
+    total: number;
+}
+
 export type PageProps<
     T extends Record<string, unknown> = Record<string, unknown>,
 > = T & {
@@ -87,6 +109,28 @@ export type Product = {
     created_at: string;
     updated_at: string;
 };
+
+export interface OrderVariant {
+    id: number;
+    order_id: number;
+    key: string;
+    value: string;
+}
+
+export interface Order {
+    id: number;
+    order_number: string;
+    order_status: string;
+    price: string;
+    qty: number;
+    user_id: number;
+    product_id: number;
+    created_at: string;
+    updated_at: string;
+    product: Product;
+    ordervariants: OrderVariant[];
+    user: User;
+}
 
 
 

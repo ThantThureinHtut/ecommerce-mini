@@ -9,7 +9,6 @@ import { Items, Product } from "@/types";
 const Cart = lazy(() => import("@/Components/Cart/Cart"));
 
 export default function CartPage({ items  , cart_id}: { items?: Items[] , cart_id: number}) {
-
     const [processing, setProcessing] = useState(false);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const cartItems = (items ?? []).map((item) => {
@@ -23,7 +22,6 @@ export default function CartPage({ items  , cart_id}: { items?: Items[] , cart_i
             image: item.product.productimages[0]?.image_url || "",
         };
     });
-     console.log("main" , cartItems)
     const variant = (items ?? []).map((item, index) => {
         if (item.cart_item_variants.length > 0) {
            return  item.cart_item_variants.map((variant, index) => {

@@ -51,9 +51,9 @@ export default function ItemDetail({ item }: { item: Product }) {
     const filledStars = Math.round(rating);
     const [processing, setProcessing] = useState(false);
     const [priceAndQuantity, setPriceAndQuantity] = useState<{
-        price: number;
+        price: string;
         quantity: number;
-    }>({ price: 0, quantity: 1 });
+    }>({ price: '', quantity: 1 });
 
     // Track selected quantity
     const [selectedQuantityValue, setselectedQuantityValue] =
@@ -116,7 +116,7 @@ export default function ItemDetail({ item }: { item: Product }) {
     // Update price and quantity when variant changes
     useEffect(() => {
         axios
-            .post(`${import.meta.env.VITE_BACKEND_URL}/item/variant`, {
+            .post(route("item.variant"), {
                 product_id: item?.id,
                 product_value_id: selectedVariantIndex ?? null,
             })
@@ -125,8 +125,14 @@ export default function ItemDetail({ item }: { item: Product }) {
                     price: res.data.selectItem?.price ?? item?.base_price,
                     quantity: res.data.selectItem?.stock ?? item?.stock,
                 });
+            })
+            .catch(() => {
+                setPriceAndQuantity({
+                    price: item?.base_price,
+                    quantity: item?.stock || 1,
+                });
             });
-    }, [selectedVariantIndex]);
+    }, [selectedVariantIndex, item?.id, item?.base_price, item?.stock]);
 
     return (
         <GuestLayout>

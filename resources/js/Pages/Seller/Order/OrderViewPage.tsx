@@ -2,7 +2,6 @@ import SellerLayout from "@/Layouts/SellerLayout";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Badge } from "@/Components/ui/badge";
-import { Separator } from "@/Components/ui/separator";
 import {
     Select,
     SelectContent,
@@ -23,68 +22,56 @@ import {
     DotsThree,
 } from "@phosphor-icons/react";
 import { Link } from "@inertiajs/react";
-
-// Sample order data
-const orders = [
-    {
-        id: "ORD-2024-001",
-        customer: "John Doe",
-        email: "john@example.com",
-        items: 3,
-        total: 287.0,
-        status: "pending",
-        date: "2024-01-15",
-    },
-    {
-        id: "ORD-2024-002",
-        customer: "Jane Smith",
-        email: "jane@example.com",
-        items: 1,
-        total: 189.0,
-        status: "processing",
-        date: "2024-01-14",
-    },
-    {
-        id: "ORD-2024-003",
-        customer: "Bob Johnson",
-        email: "bob@example.com",
-        items: 2,
-        total: 156.5,
-        status: "shipped",
-        date: "2024-01-13",
-    },
-    {
-        id: "ORD-2024-004",
-        customer: "Alice Brown",
-        email: "alice@example.com",
-        items: 5,
-        total: 423.0,
-        status: "delivered",
-        date: "2024-01-12",
-    },
-    {
-        id: "ORD-2024-005",
-        customer: "Charlie Wilson",
-        email: "charlie@example.com",
-        items: 1,
-        total: 64.0,
-        status: "cancelled",
-        date: "2024-01-11",
-    },
-];
+import { Order, PaginatedData, PaginationLink } from "@/types";
 
 const statusConfig: Record<
     string,
     { label: string; icon: React.ElementType; variant: string }
 > = {
+    none: { label: "Pending", icon: Clock, variant: "secondary" },
     pending: { label: "Pending", icon: Clock, variant: "secondary" },
     processing: { label: "Processing", icon: Package, variant: "default" },
     shipped: { label: "Shipped", icon: Truck, variant: "outline" },
+    placed: { label: "Placed", icon: ClipboardText, variant: "secondary" },
     delivered: { label: "Delivered", icon: CheckCircle, variant: "default" },
     cancelled: { label: "Cancelled", icon: XCircle, variant: "destructive" },
 };
 
-export default function OrderViewPage() {
+const normalizePaginationLabel = (label: string) =>
+    label
+        .replace(/&laquo;/g, "«")
+        .replace(/&raquo;/g, "»")
+        .replace(/&amp;/g, "&")
+        .replace(/<[^>]*>/g, "")
+        .trim();
+
+const getPaginationDisplayLabel = (label: string) => {
+    const normalizedLabel = normalizePaginationLabel(label);
+    const pageNumber = Number(normalizedLabel);
+    return Number.isNaN(pageNumber) ? normalizedLabel : pageNumber;
+};
+
+export default function OrderViewPage({
+    orders,
+}: {
+    orders: PaginatedData<Order>;
+}) {
+    const orderItems = orders.data;
+    const pendingCount = orderItems.filter((order) =>
+        ["none", "pending", "placed"].includes(
+            order.order_status.toLowerCase(),
+        ),
+    ).length;
+    const processingCount = orderItems.filter(
+        (order) => order.order_status.toLowerCase() === "processing",
+    ).length;
+    const shippedCount = orderItems.filter((order) =>
+        ["shipped", "in transit"].includes(order.order_status.toLowerCase()),
+    ).length;
+    const deliveredCount = orderItems.filter(
+        (order) => order.order_status.toLowerCase() === "delivered",
+    ).length;
+
     return (
         <SellerLayout>
             {/* Header Section */}
@@ -112,7 +99,7 @@ export default function OrderViewPage() {
                             </h1>
                             <Badge variant="secondary" className="text-sm p-4">
                                 <ClipboardText className="size-4 mr-2" />
-                                {orders.length} orders
+                                {orders.total} orders
                             </Badge>
                         </div>
                         <p className="max-w-2xl text-sm text-muted-foreground">
@@ -132,7 +119,7 @@ export default function OrderViewPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-semibold text-foreground">
-                                12
+                                {pendingCount}
                             </p>
                             <p className="text-xs text-muted-foreground">
                                 Pending
@@ -147,7 +134,7 @@ export default function OrderViewPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-semibold text-foreground">
-                                8
+                                {processingCount}
                             </p>
                             <p className="text-xs text-muted-foreground">
                                 Processing
@@ -162,7 +149,7 @@ export default function OrderViewPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-semibold text-foreground">
-                                24
+                                {shippedCount}
                             </p>
                             <p className="text-xs text-muted-foreground">
                                 Shipped
@@ -177,7 +164,7 @@ export default function OrderViewPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-semibold text-foreground">
-                                156
+                                {deliveredCount}
                             </p>
                             <p className="text-xs text-muted-foreground">
                                 Delivered
@@ -244,7 +231,7 @@ export default function OrderViewPage() {
                     <div className="hidden md:grid grid-cols-[1fr_1.5fr_0.8fr_0.8fr_1fr_0.8fr] gap-4 px-6 py-3 border-b border-border bg-secondary/30 text-xs uppercase tracking-wider text-muted-foreground font-medium">
                         <span>Order ID</span>
                         <span>Customer</span>
-                        <span>Items</span>
+                        <span>Quantity</span>
                         <span>Total</span>
                         <span>Status</span>
                         <span className="text-right">Actions</span>
@@ -252,8 +239,12 @@ export default function OrderViewPage() {
 
                     {/* Table Body */}
                     <div className="divide-y divide-border">
-                        {orders.map((order) => {
-                            const status = statusConfig[order.status];
+                        {orderItems.map((order) => {
+                            const normalizedStatus =
+                                order.order_status.toLowerCase();
+                            const status =
+                                statusConfig[normalizedStatus] ??
+                                statusConfig.pending;
                             const StatusIcon = status.icon;
 
                             return (
@@ -267,17 +258,17 @@ export default function OrderViewPage() {
                                             Order:
                                         </span>
                                         <span className="font-mono text-sm font-medium text-foreground">
-                                            {order.id}
+                                            {order.order_number}
                                         </span>
                                     </div>
 
                                     {/* Customer */}
                                     <div className="flex flex-col">
                                         <span className="text-sm font-medium text-foreground">
-                                            {order.customer}
+                                            {order.user?.name}
                                         </span>
                                         <span className="text-xs text-muted-foreground">
-                                            {order.email}
+                                            {order.user?.email}
                                         </span>
                                     </div>
 
@@ -287,10 +278,8 @@ export default function OrderViewPage() {
                                             Items:
                                         </span>
                                         <span className="text-sm text-foreground">
-                                            {order.items}{" "}
-                                            {order.items === 1
-                                                ? "item"
-                                                : "items"}
+                                            {order.qty}{" "}
+                                            {order.qty === 1 ? "item" : "items"}
                                         </span>
                                     </div>
 
@@ -300,7 +289,7 @@ export default function OrderViewPage() {
                                             Total:
                                         </span>
                                         <span className="text-sm font-medium text-foreground">
-                                            ${order.total.toFixed(2)}
+                                            ${Number(order.price).toFixed(2)}
                                         </span>
                                     </div>
 
@@ -323,16 +312,23 @@ export default function OrderViewPage() {
 
                                     {/* Actions */}
                                     <div className="flex items-center justify-end gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="gap-1.5"
+                                        <Link
+                                            href={route(
+                                                "order-view-detail.dashboard",order.id
+                                            )}
                                         >
-                                            <Eye className="size-3.5" />
-                                            <span className="hidden sm:inline">
-                                                View
-                                            </span>
-                                        </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="gap-1.5"
+                                            >
+                                                <Eye className="size-3.5" />
+                                                <span className="hidden sm:inline">
+                                                    View
+                                                </span>
+                                            </Button>
+                                        </Link>
+
                                         <Button
                                             variant="ghost"
                                             size="sm"
@@ -352,24 +348,41 @@ export default function OrderViewPage() {
                     {/* Table Footer */}
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-border bg-secondary/30">
                         <p className="text-xs text-muted-foreground">
-                            Showing {orders.length} of {orders.length} orders
+                            Showing {orders.from ?? 0}-{orders.to ?? 0} of{" "}
+                            {orders.total} orders
                         </p>
+
                         <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled
-                                className="text-xs"
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-xs"
-                            >
-                                Next
-                            </Button>
+                            {orders.links.map((link: PaginationLink, index) => {
+                                const displayLabel = getPaginationDisplayLabel(
+                                    link.label,
+                                );
+
+                                return (
+                                    <Button
+                                        key={`${String(displayLabel)}-${index}`}
+                                        variant={
+                                            link.active ? "default" : "outline"
+                                        }
+                                        size="sm"
+                                        className="text-xs"
+                                        disabled={!link.url}
+                                        asChild={!!link.url}
+                                    >
+                                        {link.url ? (
+                                            <Link
+                                                href={link.url}
+                                                preserveScroll
+                                                preserveState
+                                            >
+                                                {displayLabel}
+                                            </Link>
+                                        ) : (
+                                            <span>{displayLabel}</span>
+                                        )}
+                                    </Button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

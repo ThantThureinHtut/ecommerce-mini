@@ -65,6 +65,7 @@ Route::group(['prefix' => 'seller'], function () {
     Route::get('/add-product', [ProductController::class, 'index'])->middleware('seller')->name('add-product.dashboard');
     Route::post('/store-product', [ProductController::class, 'store'])->middleware('seller')->name('store-product');
     Route::get('/order-view', [OrderController::class, 'seller_order_index'])->middleware('seller')->name('order-view.dashboard');
+    Route::get('/order-view-detail/{id}' , [OrderController::class,'seller_order_detail'])->middleware('seller')->name('order-view-detail.dashboard');
 });
 
 require __DIR__ . '/auth.php';

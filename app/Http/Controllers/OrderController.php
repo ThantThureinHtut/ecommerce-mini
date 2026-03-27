@@ -184,37 +184,38 @@ class OrderController extends Controller
         $variants = $request->variant;
         $cart = Cart::find($request->cart_id);
         $timezone = $request->string('browser_timezone')->toString();
-        $orderCode = "ORDER-MM" . "-" . time();
-        foreach ($cartItems as $cartKey => $cartItem) {
-            // $cartItem is output array so can't use the ->name
-            $order = Order::create([
-                "order_number" => $orderCode,
-                "order_status" => "none",
-                "price" => (int) $cartItem['price'],
-                "qty" => (int) $cartItem['qty'],
-                "user_id" => Auth::user()->id,
-                "product_id" => $cartItem['product_id'],
-            ]);
-            // This check is variant is exit for that product or not to aviod the null or underfined error
-            if (isset($variants[$cartKey])) {
-                foreach ($variants[$cartKey] as $variant) {
-                    foreach ($variant as $variantKey => $variantValue) {
-                        $order->ordervariants()->create([
-                            'key' => $variantKey,
-                            'value' => $variantValue
-                        ]);
+        DB::transaction(function () use ($cartItems, $variants, $cart, $timezone) {
+            $orderCode = "ORDER-MM" . "-" . time();
+            foreach ($cartItems as $cartKey => $cartItem) {
+                // $cartItem is output array so can't use the ->name
+                $order = Order::create([
+                    "order_number" => $orderCode,
+                    "order_status" => "none",
+                    "price" => (int) $cartItem['price'],
+                    "qty" => (int) $cartItem['qty'],
+                    "user_id" => Auth::user()->id,
+                    "product_id" => $cartItem['product_id'],
+                ]);
+                // This check is variant is exit for that product or not to aviod the null or underfined error
+                if (isset($variants[$cartKey])) {
+                    foreach ($variants[$cartKey] as $variant) {
+                        foreach ($variant as $variantKey => $variantValue) {
+                            $order->ordervariants()->create([
+                                'key' => $variantKey,
+                                'value' => $variantValue
+                            ]);
+                        }
                     }
                 }
             }
-        }
-        if (isset($cart)) {
-            $cart->delete();
-        }
-        $orders = Order::where('order_number', $orderCode)->get();
-        if (isset($orders)) {
-            Mail::to(Auth::user()->email)->queue(new OrderPlacedMail($orders, $timezone));
-        }
-
+            if (isset($cart)) {
+                $cart->delete();
+            }
+            $orders = Order::where('order_number', $orderCode)->get();
+            if (isset($orders)) {
+                Mail::to(Auth::user()->email)->queue(new OrderPlacedMail($orders, $timezone));
+            }
+        });
 
 
         return back();

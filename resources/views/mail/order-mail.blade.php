@@ -7,7 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 </head>
 
-<body style="margin: 0; padding: 0; background-color: #f4efe8; font-family: Arial, Helvetica, sans-serif; color: #1f2937;">
+<body style="margin: 0; padding: 0; background-color: #f5f3ff; font-family: Arial, Helvetica, sans-serif; color: #18181b;">
     @php
         $orders = collect($orders ?? []);
         $primaryOrder = $orders->first();
@@ -30,39 +30,39 @@
     @endphp
 
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-        style="background-color: #f4efe8; margin: 0; padding: 28px 14px;">
+        style="background-color: #f5f3ff; margin: 0; padding: 28px 14px;">
         <tr>
             <td align="center">
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                    style="max-width: 680px; background-color: #fffdf9; border: 1px solid #eadfce;">
+                    style="max-width: 680px; background-color: #ffffff; border: 1px solid #e7e5f4;">
                     <tr>
-                        <td style="background-color: #16302b; padding: 34px 34px 28px;">
+                        <td style="background: linear-gradient(135deg, #1d1b31 0%, #5b21b6 55%, #7c3aed 100%); padding: 34px 34px 28px;">
                             <div
-                                style="display: inline-block; padding: 7px 12px; background-color: #e7b66b; color: #16302b; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;">
+                                style="display: inline-block; padding: 7px 12px; background-color: rgba(255, 255, 255, 0.14); color: #f5f3ff; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;">
                                 Order Receipt
                             </div>
-                            <div style="margin-top: 18px; font-size: 30px; line-height: 1.2; color: #fffdf9; font-weight: 700;">
+                            <div style="margin-top: 18px; font-size: 30px; line-height: 1.2; color: #ffffff; font-weight: 700;">
                                 Thanks, {{ $customerName }}.
                             </div>
-                            <div style="margin-top: 10px; max-width: 520px; font-size: 15px; line-height: 1.7; color: #d8e2dc;">
+                            <div style="margin-top: 10px; max-width: 520px; font-size: 15px; line-height: 1.7; color: rgba(245, 243, 255, 0.88);">
                                 Your order has been placed successfully. Here is a clear summary of the items and totals from your order data.
                             </div>
                         </td>
                     </tr>
 
                     <tr>
-                        <td style="padding: 22px 34px 8px; background-color: #fffdf9;">
+                        <td style="padding: 22px 34px 8px; background-color: #ffffff;">
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                                 <tr>
                                     <td width="50%" valign="top" style="padding: 0 8px 12px 0;">
                                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                                            style="background-color: #f8f2e8; border: 1px solid #eadfce;">
+                                            style="background-color: #f5f3ff; border: 1px solid #ddd6fe;">
                                             <tr>
                                                 <td style="padding: 16px 18px;">
-                                                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #8a6a3d;">
+                                                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #6d28d9;">
                                                         Order Number
                                                     </div>
-                                                    <div style="margin-top: 8px; font-size: 18px; line-height: 1.4; font-weight: 700; color: #16302b;">
+                                                    <div style="margin-top: 8px; font-size: 18px; line-height: 1.4; font-weight: 700; color: #18181b;">
                                                         {{ $orderNumber }}
                                                     </div>
                                                 </td>
@@ -71,13 +71,13 @@
                                     </td>
                                     <td width="50%" valign="top" style="padding: 0 0 12px 8px;">
                                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                                            style="background-color: #eef5f1; border: 1px solid #d7e4dc;">
+                                            style="background-color: #faf5ff; border: 1px solid #e9d5ff;">
                                             <tr>
                                                 <td style="padding: 16px 18px;">
-                                                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #4a6b61;">
+                                                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #7e22ce;">
                                                         Current Status
                                                     </div>
-                                                    <div style="margin-top: 8px; font-size: 18px; line-height: 1.4; font-weight: 700; color: #16302b;">
+                                                    <div style="margin-top: 8px; font-size: 18px; line-height: 1.4; font-weight: 700; color: #18181b;">
                                                         {{ $statusLabel }}
                                                     </div>
                                                 </td>
@@ -88,13 +88,13 @@
                                 <tr>
                                     <td width="50%" valign="top" style="padding: 0 8px 12px 0;">
                                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                                            style="background-color: #ffffff; border: 1px solid #eadfce;">
+                                            style="background-color: #ffffff; border: 1px solid #e4e4e7;">
                                             <tr>
                                                 <td style="padding: 16px 18px;">
-                                                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #6b7280;">
+                                                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #71717a;">
                                                         Ordered On
                                                     </div>
-                                                    <div style="margin-top: 8px; font-size: 15px; line-height: 1.6; font-weight: 700; color: #1f2937;">
+                                                    <div style="margin-top: 8px; font-size: 15px; line-height: 1.6; font-weight: 700; color: #18181b;">
                                                         {{ $placedAt }}
                                                     </div>
                                                 </td>
@@ -103,13 +103,13 @@
                                     </td>
                                     <td width="50%" valign="top" style="padding: 0 0 12px 8px;">
                                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                                            style="background-color: #ffffff; border: 1px solid #eadfce;">
+                                            style="background-color: #ffffff; border: 1px solid #e4e4e7;">
                                             <tr>
                                                 <td style="padding: 16px 18px;">
-                                                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #6b7280;">
+                                                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #71717a;">
                                                         Order Total
                                                     </div>
-                                                    <div style="margin-top: 8px; font-size: 18px; line-height: 1.4; font-weight: 700; color: #16302b;">
+                                                    <div style="margin-top: 8px; font-size: 18px; line-height: 1.4; font-weight: 700; color: #18181b;">
                                                         ${{ $grandTotal }}
                                                     </div>
                                                 </td>
@@ -124,16 +124,16 @@
                     <tr>
                         <td style="padding: 8px 34px 12px;">
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                                style="background-color: #16302b;">
+                                style="background-color: #1d1b31;">
                                 <tr>
                                     <td style="padding: 20px 22px;">
-                                        <div style="font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #e7b66b;">
+                                        <div style="font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #c4b5fd;">
                                             Quick Summary
                                         </div>
-                                        <div style="margin-top: 10px; font-size: 24px; line-height: 1.3; font-weight: 700; color: #fffdf9;">
+                                        <div style="margin-top: 10px; font-size: 24px; line-height: 1.3; font-weight: 700; color: #ffffff;">
                                             {{ $totalItems }} item{{ $totalItems === 1 ? '' : 's' }} across {{ $orders->count() }} line{{ $orders->count() === 1 ? '' : 's' }}
                                         </div>
-                                        <div style="margin-top: 8px; font-size: 14px; line-height: 1.7; color: #d8e2dc;">
+                                        <div style="margin-top: 8px; font-size: 14px; line-height: 1.7; color: #ddd6fe;">
                                             Product name, quantity, selected variants, unit price, and line total are shown below.
                                         </div>
                                     </td>
@@ -156,35 +156,35 @@
                                 @endphp
 
                                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                                    style="background-color: #ffffff; border: 1px solid #eadfce; margin-bottom: 14px;">
+                                    style="background-color: #ffffff; border: 1px solid #e4e4e7; margin-bottom: 14px;">
                                     <tr>
                                         <td style="padding: 22px;">
                                             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                                                 <tr>
                                                     <td valign="top" style="width: 72px; padding: 0 16px 0 0;">
                                                         <div
-                                                            style="width: 72px; height: 72px; background-color: #f2e5d3; color: #8a5d22; text-align: center; line-height: 72px; font-size: 26px; font-weight: 700;">
+                                                            style="width: 72px; height: 72px; background: linear-gradient(135deg, #ede9fe 0%, #c4b5fd 100%); color: #5b21b6; text-align: center; line-height: 72px; font-size: 26px; font-weight: 700;">
                                                             {{ strtoupper(substr($productName, 0, 1)) }}
                                                         </div>
                                                     </td>
                                                     <td valign="top">
-                                                        <div style="font-size: 20px; line-height: 1.3; font-weight: 700; color: #16302b;">
+                                                        <div style="font-size: 20px; line-height: 1.3; font-weight: 700; color: #18181b;">
                                                             {{ $productName }}
                                                         </div>
-                                                        <div style="margin-top: 8px; font-size: 14px; line-height: 1.8; color: #4b5563;">
+                                                        <div style="margin-top: 8px; font-size: 14px; line-height: 1.8; color: #52525b;">
                                                             Status: {{ $orderStatus }}<br>
                                                             Quantity: {{ $quantity }}<br>
                                                             Unit Price: ${{ $unitPrice }}
                                                         </div>
 
                                                         @if ($variants->isNotEmpty())
-                                                            <div style="margin-top: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #8a6a3d;">
+                                                            <div style="margin-top: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #6d28d9;">
                                                                 Selected Options
                                                             </div>
                                                             <div style="margin-top: 10px;">
                                                                 @foreach ($variants as $variant)
                                                                     <span
-                                                                        style="display: inline-block; margin: 0 8px 8px 0; padding: 8px 12px; background-color: #f8f2e8; border: 1px solid #eadfce; font-size: 13px; font-weight: 700; color: #6c4f29;">
+                                                                        style="display: inline-block; margin: 0 8px 8px 0; padding: 8px 12px; background-color: #f5f3ff; border: 1px solid #ddd6fe; font-size: 13px; font-weight: 700; color: #5b21b6;">
                                                                         {{ ucfirst($variant->key) }}: {{ $variant->value }}
                                                                     </span>
                                                                 @endforeach
@@ -192,10 +192,10 @@
                                                         @endif
                                                     </td>
                                                     <td align="right" valign="top" style="width: 120px;">
-                                                        <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #6b7280;">
+                                                        <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #71717a;">
                                                             Line Total
                                                         </div>
-                                                        <div style="margin-top: 8px; font-size: 21px; line-height: 1.3; font-weight: 700; color: #16302b;">
+                                                        <div style="margin-top: 8px; font-size: 21px; line-height: 1.3; font-weight: 700; color: #18181b;">
                                                             ${{ $lineTotal }}
                                                         </div>
                                                     </td>
@@ -206,9 +206,9 @@
                                 </table>
                             @empty
                                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                                    style="background-color: #ffffff; border: 1px solid #eadfce;">
+                                    style="background-color: #ffffff; border: 1px solid #e4e4e7;">
                                     <tr>
-                                        <td style="padding: 24px; font-size: 14px; line-height: 1.8; color: #4b5563;">
+                                        <td style="padding: 24px; font-size: 14px; line-height: 1.8; color: #52525b;">
                                             Your order confirmation is ready, but the item list is temporarily unavailable.
                                         </td>
                                     </tr>
@@ -220,28 +220,28 @@
                     <tr>
                         <td style="padding: 8px 34px 12px;">
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                                style="background-color: #f8f2e8; border: 1px solid #eadfce;">
+                                style="background-color: #f5f3ff; border: 1px solid #ddd6fe;">
                                 <tr>
-                                    <td style="padding: 18px 22px; font-size: 14px; line-height: 1.7; color: #6c4f29;">
+                                    <td style="padding: 18px 22px; font-size: 14px; line-height: 1.7; color: #6d28d9;">
                                         Items Total
                                     </td>
-                                    <td align="right" style="padding: 18px 22px; font-size: 14px; line-height: 1.7; font-weight: 700; color: #16302b;">
+                                    <td align="right" style="padding: 18px 22px; font-size: 14px; line-height: 1.7; font-weight: 700; color: #18181b;">
                                         ${{ $grandTotal }}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 0 22px 18px; font-size: 14px; line-height: 1.7; color: #6c4f29;">
+                                    <td style="padding: 0 22px 18px; font-size: 14px; line-height: 1.7; color: #6d28d9;">
                                         Shipping
                                     </td>
-                                    <td align="right" style="padding: 0 22px 18px; font-size: 14px; line-height: 1.7; font-weight: 700; color: #16302b;">
+                                    <td align="right" style="padding: 0 22px 18px; font-size: 14px; line-height: 1.7; font-weight: 700; color: #18181b;">
                                         Calculated at checkout
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 0 22px 22px; font-size: 18px; line-height: 1.7; font-weight: 700; color: #16302b;">
+                                    <td style="padding: 0 22px 22px; font-size: 18px; line-height: 1.7; font-weight: 700; color: #18181b;">
                                         Grand Total
                                     </td>
-                                    <td align="right" style="padding: 0 22px 22px; font-size: 18px; line-height: 1.7; font-weight: 700; color: #16302b;">
+                                    <td align="right" style="padding: 0 22px 22px; font-size: 18px; line-height: 1.7; font-weight: 700; color: #18181b;">
                                         ${{ $grandTotal }}
                                     </td>
                                 </tr>
@@ -253,23 +253,23 @@
                         <td style="padding: 8px 34px 16px;">
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
-                                    <td style="background-color: #16302b;">
+                                    <td style="background-color: #5b21b6;">
                                         <a href="{{ $trackingUrl }}"
-                                            style="display: inline-block; padding: 14px 22px; font-size: 14px; font-weight: 700; color: #fffdf9; text-decoration: none;">
+                                            style="display: inline-block; padding: 14px 22px; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none;">
                                             Track Order
                                         </a>
                                     </td>
                                     <td style="width: 10px;"></td>
-                                    <td style="background-color: #e7b66b;">
+                                    <td style="background-color: #ede9fe; border: 1px solid #ddd6fe;">
                                         <a href="{{ $ordersUrl }}"
-                                            style="display: inline-block; padding: 14px 22px; font-size: 14px; font-weight: 700; color: #16302b; text-decoration: none;">
+                                            style="display: inline-block; padding: 14px 22px; font-size: 14px; font-weight: 700; color: #5b21b6; text-decoration: none;">
                                             View Orders
                                         </a>
                                     </td>
                                     <td style="width: 10px;"></td>
-                                    <td style="background-color: #fffdf9; border: 1px solid #eadfce;">
+                                    <td style="background-color: #ffffff; border: 1px solid #e4e4e7;">
                                         <a href="{{ $shopUrl }}"
-                                            style="display: inline-block; padding: 14px 22px; font-size: 14px; font-weight: 700; color: #6c4f29; text-decoration: none;">
+                                            style="display: inline-block; padding: 14px 22px; font-size: 14px; font-weight: 700; color: #52525b; text-decoration: none;">
                                             Continue Shopping
                                         </a>
                                     </td>
@@ -281,9 +281,9 @@
                     <tr>
                         <td style="padding: 0 34px 18px;">
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-                                style="background-color: #eef5f1; border: 1px solid #d7e4dc;">
+                                style="background-color: #fafafa; border: 1px solid #e4e4e7;">
                                 <tr>
-                                    <td style="padding: 18px 20px; font-size: 14px; line-height: 1.8; color: #36574d;">
+                                    <td style="padding: 18px 20px; font-size: 14px; line-height: 1.8; color: #52525b;">
                                         We’ll send you another update when the order status changes. Keep your order number handy in case you need support.
                                     </td>
                                 </tr>
@@ -293,8 +293,8 @@
 
                     <tr>
                         <td style="padding: 0 34px 30px; text-align: center;">
-                            <div style="font-size: 12px; line-height: 1.8; color: #8b9099;">
-                                Confirmation for order <strong style="color: #4b5563;">{{ $orderNumber }}</strong>
+                            <div style="font-size: 12px; line-height: 1.8; color: #a1a1aa;">
+                                Confirmation for order <strong style="color: #71717a;">{{ $orderNumber }}</strong>
                             </div>
                         </td>
                     </tr>

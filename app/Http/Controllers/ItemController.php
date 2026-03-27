@@ -25,7 +25,16 @@ class ItemController extends Controller
 
     public function selectItem(Request $request)
     {
-        foreach ($request->product_value_id as $product_value_id) {
+        $productValueIds = collect($request->input('product_value_id', []))
+            ->map(fn($value) => (int) $value)
+            ->filter()
+            ->values();
+
+        if ($productValueIds->isEmpty()) {
+            return response()->json(['selectItem' => null]);
+        }
+
+        foreach ($productValueIds as $product_value_id) {
             $selectItem = ProductVariant::where('product_id', $request->product_id)->where('product_value_id', $product_value_id)->first();
             if (!is_null($selectItem)) {
                 return response()->json(['selectItem' => $selectItem]);

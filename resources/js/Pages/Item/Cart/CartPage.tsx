@@ -48,6 +48,10 @@ export default function CartPage({ items  , cart_id}: { items?: Items[] , cart_i
         if (timerRef.current) {
             clearTimeout(timerRef.current);
         }
+
+        const browserTimezone =
+            Intl.DateTimeFormat().resolvedOptions().timeZone;
+
         setProcessing(true);
         timerRef.current = setTimeout(() => {
             router.post(
@@ -55,8 +59,8 @@ export default function CartPage({ items  , cart_id}: { items?: Items[] , cart_i
                 {
                     cartItems,
                     variant,
-                    cart_id
-
+                    cart_id,
+                    browser_timezone: browserTimezone,
                 },
                 {
                     preserveScroll: true,
@@ -105,7 +109,6 @@ export default function CartPage({ items  , cart_id}: { items?: Items[] , cart_i
             <section className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_0.9fr] pb-4">
                 <div className="space-y-4 cart-enter-items">
                     {cartItems.map((item , index) => {
-                        if(!variant[index]) return null;
                         return (
                             <Suspense key={item.id} fallback={<CartFallback />}>
                             <Cart

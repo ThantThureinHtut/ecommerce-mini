@@ -11,7 +11,7 @@ type TrackingEvent = {
     detail: string;
     time: string;
     location: string;
-    status: "done" | "current" | "upcoming";
+    status: "none" | "pending" | "processing" | "shipped" | "delivered" | "cancelled";
 };
 
 export default function OrderTrackingPage() {
@@ -25,7 +25,7 @@ export default function OrderTrackingPage() {
             detail: "Payment confirmed and order created.",
             time: "Jan 12, 9:12 AM",
             location: "Yangon",
-            status: "done",
+            status: "none",
         },
         {
             id: 2,
@@ -33,7 +33,7 @@ export default function OrderTrackingPage() {
             detail: "Items packed at Arcadia Supply Co.",
             time: "Jan 12, 6:42 PM",
             location: "Yangon Fulfillment",
-            status: "done",
+            status: "processing",
         },
         {
             id: 3,
@@ -41,7 +41,7 @@ export default function OrderTrackingPage() {
             detail: "Handed to carrier, moving to hub.",
             time: "Jan 13, 7:25 AM",
             location: "Mandalay Hub",
-            status: "current",
+            status: "cancelled",
         },
         {
             id: 4,

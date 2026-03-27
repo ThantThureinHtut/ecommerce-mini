@@ -132,6 +132,14 @@ export interface Order {
     user: User;
 }
 
+export interface SellerOrder {
+      order_number: string;
+      latest_created_at: string;
+      item_count: number;
+      name: string;
+      email: string;
+      total_amount: string;
+}
 
 
 // Cart Page

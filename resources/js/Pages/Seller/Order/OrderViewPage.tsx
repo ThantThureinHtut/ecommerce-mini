@@ -22,7 +22,7 @@ import {
     DotsThree,
 } from "@phosphor-icons/react";
 import { Link } from "@inertiajs/react";
-import { Order, PaginatedData, PaginationLink } from "@/types";
+import { PaginatedData, PaginationLink, SellerOrder } from "@/types";
 
 const statusConfig: Record<
     string,
@@ -51,24 +51,33 @@ const getPaginationDisplayLabel = (label: string) => {
     return Number.isNaN(pageNumber) ? normalizedLabel : pageNumber;
 };
 
+const formatOrderDate = (value: string) =>
+    new Date(value).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+
 export default function OrderViewPage({
     orders,
+    status,
 }: {
-    orders: PaginatedData<Order>;
+    orders: PaginatedData<SellerOrder>;
+    status: { order_status: string }[];
 }) {
     const orderItems = orders.data;
-    const pendingCount = orderItems.filter((order) =>
+    const pendingCount = status.filter((order) =>
         ["none", "pending", "placed"].includes(
             order.order_status.toLowerCase(),
         ),
     ).length;
-    const processingCount = orderItems.filter(
+    const processingCount = status.filter(
         (order) => order.order_status.toLowerCase() === "processing",
     ).length;
-    const shippedCount = orderItems.filter((order) =>
+    const shippedCount = status.filter((order) =>
         ["shipped", "in transit"].includes(order.order_status.toLowerCase()),
     ).length;
-    const deliveredCount = orderItems.filter(
+    const deliveredCount = status.filter(
         (order) => order.order_status.toLowerCase() === "delivered",
     ).length;
 
@@ -228,34 +237,27 @@ export default function OrderViewPage({
             <section className="mt-4 pb-8">
                 <div className="rounded-none border border-border bg-background/90 shadow-sm overflow-hidden">
                     {/* Table Header */}
-                    <div className="hidden md:grid grid-cols-[1fr_1.5fr_0.8fr_0.8fr_1fr_0.8fr] gap-4 px-6 py-3 border-b border-border bg-secondary/30 text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                    <div className="hidden md:grid grid-cols-[1.1fr_1.8fr_1fr_0.8fr_0.9fr_0.9fr] gap-4 px-6 py-3 border-b border-border bg-secondary/30 text-xs uppercase tracking-wider text-muted-foreground font-medium">
                         <span>Order ID</span>
                         <span>Customer</span>
-                        <span>Quantity</span>
+                        <span>Date</span>
+                        <span>Items</span>
                         <span>Total</span>
-                        <span>Status</span>
                         <span className="text-right">Actions</span>
                     </div>
 
                     {/* Table Body */}
                     <div className="divide-y divide-border">
                         {orderItems.map((order) => {
-                            const normalizedStatus =
-                                order.order_status.toLowerCase();
-                            const status =
-                                statusConfig[normalizedStatus] ??
-                                statusConfig.pending;
-                            const StatusIcon = status.icon;
-
                             return (
                                 <div
-                                    key={order.id}
-                                    className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr_0.8fr_0.8fr_1fr_0.8fr] gap-2 md:gap-4 px-6 py-4 hover:bg-secondary/20 transition-colors"
+                                    key={order.order_number}
+                                    className="grid grid-cols-1 md:grid-cols-[1.1fr_1.8fr_1fr_0.8fr_0.9fr_0.9fr] gap-3 md:gap-4 px-6 py-4 hover:bg-secondary/20 transition-colors"
                                 >
                                     {/* Order ID */}
-                                    <div className="flex items-center gap-2">
-                                        <span className="md:hidden text-xs text-muted-foreground">
-                                            Order:
+                                    <div className="flex flex-col gap-1">
+                                        <span className="md:hidden text-xs uppercase tracking-wide text-muted-foreground">
+                                            Order ID
                                         </span>
                                         <span className="font-mono text-sm font-medium text-foreground">
                                             {order.order_number}
@@ -263,60 +265,59 @@ export default function OrderViewPage({
                                     </div>
 
                                     {/* Customer */}
-                                    <div className="flex flex-col">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="md:hidden text-xs uppercase tracking-wide text-muted-foreground">
+                                            Customer
+                                        </span>
                                         <span className="text-sm font-medium text-foreground">
-                                            {order.user?.name}
+                                            {order.name}
                                         </span>
                                         <span className="text-xs text-muted-foreground">
-                                            {order.user?.email}
+                                            {order.email}
+                                        </span>
+                                    </div>
+
+                                    {/* Date */}
+                                    <div className="flex flex-col gap-1">
+                                        <span className="md:hidden text-xs uppercase tracking-wide text-muted-foreground">
+                                            Date
+                                        </span>
+                                        <span className="text-sm text-foreground">
+                                            {formatOrderDate(
+                                                order.latest_created_at,
+                                            )}
                                         </span>
                                     </div>
 
                                     {/* Items */}
-                                    <div className="flex items-center gap-2">
-                                        <span className="md:hidden text-xs text-muted-foreground">
-                                            Items:
+                                    <div className="flex flex-col gap-1">
+                                        <span className="md:hidden text-xs uppercase tracking-wide text-muted-foreground">
+                                            Items
                                         </span>
                                         <span className="text-sm text-foreground">
-                                            {order.qty}{" "}
-                                            {order.qty === 1 ? "item" : "items"}
+                                            {order.item_count}{" "}
+                                            {order.item_count === 1
+                                                ? "item"
+                                                : "items"}
                                         </span>
                                     </div>
 
                                     {/* Total */}
-                                    <div className="flex items-center gap-2">
-                                        <span className="md:hidden text-xs text-muted-foreground">
-                                            Total:
+                                    <div className="flex flex-col gap-1">
+                                        <span className="md:hidden text-xs uppercase tracking-wide text-muted-foreground">
+                                            Total
                                         </span>
                                         <span className="text-sm font-medium text-foreground">
-                                            ${Number(order.price).toFixed(2)}
+                                            $
+                                            {Number(order.total_amount).toFixed(
+                                                2,
+                                            )}
                                         </span>
-                                    </div>
-
-                                    {/* Status */}
-                                    <div className="flex items-center gap-2">
-                                        <Badge
-                                            variant={
-                                                status.variant as
-                                                    | "default"
-                                                    | "secondary"
-                                                    | "destructive"
-                                                    | "outline"
-                                            }
-                                            className="gap-1.5"
-                                        >
-                                            <StatusIcon className="size-3" />
-                                            {status.label}
-                                        </Badge>
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex items-center justify-end gap-2">
-                                        <Link
-                                            href={route(
-                                                "order-view-detail.dashboard",order.id
-                                            )}
-                                        >
+                                    <div className="flex items-center justify-start md:justify-end gap-2">
+                                        <Link href={route("order-view-detail.dashboard" , order.order_number)}>
                                             <Button
                                                 variant="outline"
                                                 size="sm"

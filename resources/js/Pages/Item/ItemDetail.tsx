@@ -40,24 +40,43 @@ import {
     AlertDialogTrigger,
 } from "@/Components/ui/alert-dialog";
 import { RadioGroup, RadioGroupItem } from "@/Components/ui/radio-group";
-import { router, useForm, usePage } from "@inertiajs/react";
-import { Variant, Product } from "@/types";
+import { router, usePage } from "@inertiajs/react";
+import { Product } from "@/types";
 import { Label } from "@/Components/ui/label";
 import axios from "axios";
 
-export default function ItemDetail({ item }: { item: Product }) {
+export default function ItemDetail({ item }: { item: Product | null }) {
+    if (!item) {
+        return (
+            <GuestLayout>
+                <section className="rounded-none border border-border bg-background/90 px-6 py-10">
+                    <h1 className="text-2xl font-semibold text-foreground">
+                        Item not found
+                    </h1>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                        This product is unavailable or has been removed.
+                    </p>
+                </section>
+            </GuestLayout>
+        );
+    }
+
     const rating = item?.ratings_count ?? 0 / 5;
-    const reviewCount = item?.ratings_count ?? 0;
+    const reviewCount = item?.reviews_count ?? 0;
     const filledStars = Math.round(rating);
     const [processing, setProcessing] = useState(false);
+    const variants = item.variants ?? [];
+    const hasVariants = variants.length > 0;
+    const defaultPrice = item?.base_price ?? "0.00";
+    const defaultStock = Math.max(Number(item?.stock ?? 1), 1);
     const [priceAndQuantity, setPriceAndQuantity] = useState<{
         price: string;
         quantity: number;
-    }>({ price: '', quantity: 1 });
+    }>({ price: defaultPrice, quantity: defaultStock });
 
     // Track selected quantity
     const [selectedQuantityValue, setselectedQuantityValue] =
-        useState<number>(0);
+        useState<number>(1);
 
     // Track selected variant for each product type
     const [selectedVariantIndex, setSelectedVariantIndex] = useState<
@@ -66,8 +85,9 @@ export default function ItemDetail({ item }: { item: Product }) {
 
     const { auth } = usePage().props;
     const user = auth.user;
-    const variants = item.variants ?? [];
-    const images = item?.productimages;
+    const images = item.productimages ?? [];
+    // Make the limit to show the stock to prevent page crashing if stock value is too much count
+    const maxSelectableQuantity = Math.min(priceAndQuantity.quantity, 40);
     const validImages = images.filter(
         (image) =>
             typeof image?.image_url === "string" && image.image_url.trim(),
@@ -88,7 +108,9 @@ export default function ItemDetail({ item }: { item: Product }) {
         routeName: string,
     ) => {
         e.preventDefault();
-        let is_variant = variants.length > 0 ? true : false;
+        const browserTimezone =
+            Intl.DateTimeFormat().resolvedOptions().timeZone;
+        let is_variant = hasVariants;
         let variant_main_count = variants.length;
         let user_selected_variant_count =
             Object.keys(selectedVariantIndex).length;
@@ -98,42 +120,80 @@ export default function ItemDetail({ item }: { item: Product }) {
                 return;
             }
         }
-        router.post(route(routeName), {
-            user_id: user.id,
-            product_id: item.id,
-            variant_id: selectedVariantIndex,
-            price: priceAndQuantity.price,
-            qty: selectedQuantityValue,
-        }, {
-            preserveScroll: true,
-            // Start processing state before the request is sent
-            onStart: () => setProcessing(true),
-            // Reset processing state after the request finishes (success or error)
-            onFinish: () => setProcessing(false),
-        });
+        router.post(
+            route(routeName),
+            {
+                user_id: user.id,
+                product_id: item.id,
+                variant_id: selectedVariantIndex,
+                price: priceAndQuantity.price,
+                qty: selectedQuantityValue + 1,
+                browser_timezone: browserTimezone,
+            },
+            {
+                preserveScroll: true,
+                // Start processing state before the request is sent
+                onStart: () => setProcessing(true),
+                // Reset processing state after the request finishes (success or error)
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     // Update price and quantity when variant changes
     useEffect(() => {
+        if (!hasVariants) {
+            setPriceAndQuantity({
+                price: defaultPrice,
+                quantity: defaultStock,
+            });
+            return;
+        }
+
+        if (Object.keys(selectedVariantIndex).length !== variants.length) {
+            setPriceAndQuantity({
+                price: defaultPrice,
+                quantity: defaultStock,
+            });
+            return;
+        }
+
         axios
             .post(route("item.variant"), {
                 product_id: item?.id,
-                product_value_id: selectedVariantIndex ?? null,
+                product_value_id: Object.values(selectedVariantIndex),
             })
             .then((res) => {
+                if (res.data.selectItem == null) {
+                    setPriceAndQuantity({
+                        price: defaultPrice,
+                        quantity: defaultStock,
+                    });
+                    return;
+                }
                 setPriceAndQuantity({
-                    price: res.data.selectItem?.price ?? item?.base_price,
-                    quantity: res.data.selectItem?.stock ?? item?.stock,
-                });
-            })
-            .catch(() => {
-                setPriceAndQuantity({
-                    price: item?.base_price,
-                    quantity: item?.stock || 1,
+                    price: res.data.selectItem?.price ?? defaultPrice,
+                    quantity: Math.max(
+                        Number(res.data.selectItem?.stock ?? defaultStock),
+                        1,
+                    ),
                 });
             });
-    }, [selectedVariantIndex, item?.id, item?.base_price, item?.stock]);
+    }, [
+        selectedVariantIndex,
+        item.id,
+        defaultPrice,
+        defaultStock,
+        hasVariants,
+        variants.length,
+    ]);
 
+    useEffect(() => {
+        if (selectedQuantityValue > priceAndQuantity.quantity) {
+            setselectedQuantityValue(1);
+        }
+    }, [priceAndQuantity.quantity, selectedQuantityValue]);
+    console.log(item);
     return (
         <GuestLayout>
             <section className="relative overflow-hidden rounded-none border border-border bg-secondary/40">
@@ -273,94 +333,102 @@ export default function ItemDetail({ item }: { item: Product }) {
 
                         {/* Add to Cart Form */}
                         <form className="flex flex-col justify-center gap-4">
-                            <div className="w-full lg:max-w-lg pb-5 border-b border-border">
-                                <FieldGroup>
-                                    <FieldSet>
-                                        <FieldLegend>
-                                            Compute Environment
-                                        </FieldLegend>
-                                        <FieldDescription>
-                                            Select the compute environment for
-                                            your cluster.
-                                        </FieldDescription>
-                                        {item?.variants?.map((product) => (
-                                            <div
-                                                key={product.id}
-                                                className="flex flex-col gap-3"
-                                            >
-                                                <Separator />
-                                                <Label className="text-base font-bold">
-                                                    {
-                                                        product?.product_type
-                                                            ?.name
-                                                    }
-                                                </Label>
-                                                <FieldDescription>
-                                                    Selected:{" "}
-                                                    {product?.product_values?.find(
-                                                        (value) =>
-                                                            value.id ===
+                            {hasVariants ? (
+                                <div className="w-full lg:max-w-lg pb-5 border-b border-border">
+                                    <FieldGroup>
+                                        <FieldSet>
+                                            <FieldLegend>
+                                                Compute Environment
+                                            </FieldLegend>
+                                            <FieldDescription>
+                                                Select the compute environment
+                                                for your cluster.
+                                            </FieldDescription>
+                                            {variants.map((product) => (
+                                                <div
+                                                    key={product.id}
+                                                    className="flex flex-col gap-3"
+                                                >
+                                                    <Separator />
+                                                    <Label className="text-base font-bold">
+                                                        {
+                                                            product
+                                                                ?.product_type
+                                                                ?.name
+                                                        }
+                                                    </Label>
+                                                    <FieldDescription>
+                                                        Selected:{" "}
+                                                        {product?.product_values?.find(
+                                                            (value) =>
+                                                                value.id ===
+                                                                selectedVariantIndex[
+                                                                    product.id
+                                                                ],
+                                                        )?.name ?? "None"}
+                                                    </FieldDescription>
+
+                                                    <RadioGroup
+                                                        value={
                                                             selectedVariantIndex[
                                                                 product.id
-                                                            ],
-                                                    )?.name ?? "None"}
-                                                </FieldDescription>
-
-                                                {/* Choose Variant */}
-                                                <RadioGroup
-                                                    value={
-                                                        selectedVariantIndex[
-                                                            product.id
-                                                        ]?.toString() ?? ""
-                                                    }
-                                                    onValueChange={(value) =>
-                                                        handleVariantChange(
-                                                            product.id,
+                                                            ]?.toString() ?? ""
+                                                        }
+                                                        onValueChange={(
                                                             value,
-                                                        )
-                                                    }
-                                                    className="gap-3 grid grid-cols-1 md:grid-cols-2 "
-                                                >
-                                                    {product?.product_values?.map(
-                                                        (value) => (
-                                                            <FieldLabel
-                                                                key={value.id}
-                                                                htmlFor={`variant-${product.id}-value-${value.id}`}
-                                                                className="cursor-pointer hover:bg-accent transition-all [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/10 dark:[&:has([data-state=checked])]:bg-primary/20"
-                                                            >
-                                                                <Field
-                                                                    orientation="horizontal"
-                                                                    className="items-start justify-between gap-4"
+                                                        ) =>
+                                                            handleVariantChange(
+                                                                product.id,
+                                                                value,
+                                                            )
+                                                        }
+                                                        className="gap-3 grid grid-cols-1 md:grid-cols-2 "
+                                                    >
+                                                        {product?.product_values?.map(
+                                                            (value) => (
+                                                                <FieldLabel
+                                                                    key={
+                                                                        value.id
+                                                                    }
+                                                                    htmlFor={`variant-${product.id}-value-${value.id}`}
+                                                                    className="cursor-pointer hover:bg-accent transition-all [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/10 dark:[&:has([data-state=checked])]:bg-primary/20"
                                                                 >
-                                                                    <FieldContent className="gap-1">
-                                                                        <FieldTitle>
-                                                                            {
-                                                                                value?.name
-                                                                            }
-                                                                        </FieldTitle>
-                                                                    </FieldContent>
-                                                                    <RadioGroupItem
-                                                                        value={`${value.id}`}
-                                                                        id={`variant-${product.id}-value-${value.id}`}
-                                                                    />
-                                                                </Field>
-                                                            </FieldLabel>
-                                                        ),
-                                                    )}
-                                                </RadioGroup>
-                                            </div>
-                                        ))}
-                                    </FieldSet>
-                                </FieldGroup>
-                            </div>
+                                                                    <Field
+                                                                        orientation="horizontal"
+                                                                        className="items-start justify-between gap-4"
+                                                                    >
+                                                                        <FieldContent className="gap-1">
+                                                                            <FieldTitle>
+                                                                                {
+                                                                                    value?.name
+                                                                                }
+                                                                            </FieldTitle>
+                                                                        </FieldContent>
+                                                                        <RadioGroupItem
+                                                                            value={`${value.id}`}
+                                                                            id={`variant-${product.id}-value-${value.id}`}
+                                                                        />
+                                                                    </Field>
+                                                                </FieldLabel>
+                                                            ),
+                                                        )}
+                                                    </RadioGroup>
+                                                </div>
+                                            ))}
+                                        </FieldSet>
+                                    </FieldGroup>
+                                </div>
+                            ) : null}
 
+                            {/* Selected Value  */}
                             <div>
                                 <Select
-                                    onValueChange={(value) => {
-                                        setselectedQuantityValue(
-                                            Number(value) + 1,
-                                        );
-                                    }}
+                                value={String(selectedQuantityValue)}
+                                onValueChange={(value) => {
+                                    setselectedQuantityValue(
+                                        Number(value)
+                                    );
+                                }}
                                 >
                                     <SelectTrigger className="w-[180px] text-sm py-4">
                                         <SelectValue
@@ -369,9 +437,7 @@ export default function ItemDetail({ item }: { item: Product }) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {Array.from({
-                                            length: Number(
-                                                priceAndQuantity.quantity,
-                                            ),
+                                            length: maxSelectableQuantity,
                                         }).map((_, index) => (
                                             <SelectItem
                                                 value={`${index}`}

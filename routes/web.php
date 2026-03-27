@@ -46,6 +46,8 @@ Route::group(['prefix' => 'cart'], function () {
 
 Route::group(['prefix' => 'order'], function () {
     Route::get('/', [OrderController::class, 'index'])->name('order.dashboard');
+    Route::get('/address', [OrderController::class, 'address'])->name('order.address');
+    Route::patch('/address', [OrderController::class, 'updateAddress'])->name('order.address.update');
     Route::get('/{id}/tracking', [OrderController::class, 'tracking'])->name('order.tracking');
     Route::post('/store' , [OrderController::class , 'store'])->name('order.store');
 });
@@ -65,7 +67,10 @@ Route::group(['prefix' => 'seller'], function () {
     Route::get('/add-product', [ProductController::class, 'index'])->middleware('seller')->name('add-product.dashboard');
     Route::post('/store-product', [ProductController::class, 'store'])->middleware('seller')->name('store-product');
     Route::get('/order-view', [OrderController::class, 'seller_order_index'])->middleware('seller')->name('order-view.dashboard');
-    Route::get('/order-view-detail/{id}' , [OrderController::class,'seller_order_detail'])->middleware('seller')->name('order-view-detail.dashboard');
+    Route::get('/order-view-detail/{order_number}' , [OrderController::class,'seller_order_detail'])->middleware('seller')->name('order-view-detail.dashboard');
+    Route::get('/order-print/{id}' , [OrderController::class , 'print_invoice'])->middleware('seller')->name('order.print');
+    Route::get('/{id}/tracking', [OrderController::class, 'seller_tracking'])->middleware('seller')->name('seller.order.tracking');
+    Route::patch('/{id}/tracking', [OrderController::class, 'update_seller_tracking'])->middleware('seller')->name('seller.order.tracking.update');
 });
 
 require __DIR__ . '/auth.php';

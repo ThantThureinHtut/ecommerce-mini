@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Shapping_Address extends Model
 {
+    protected $table = 'shapping_addresses';
 
     protected $fillable = [
         'user_id',

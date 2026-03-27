@@ -23,7 +23,7 @@ export default function Cart({
     variant,
 }: {
     item: CartItem;
-    variant: Variant[] ;
+    variant: Variant[] | undefined;
 }) {
     const [qty, setQty] = useState<number>(item.qty);
     const [confirmedQty, setConfirmedQty] = useState<number>(item.qty);
@@ -212,7 +212,7 @@ export default function Cart({
                     </div>
 
                     <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        {variant.map((v) => {
+                        {variant?.map((v) => {
                            return Object.entries(v).map(([key, value]) => {
                             return <span
                                 key={key}

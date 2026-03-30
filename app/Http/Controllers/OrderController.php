@@ -140,7 +140,7 @@ class OrderController extends Controller
     }
     public function seller_order_detail($order_number)
     {
-        logger($order_number);
+
         $sellerId = Auth::user()?->seller?->id;
         $orders = Order::where('order_number', $order_number)->with(['user', 'product.productimages', 'ordervariants'])
             ->whereHas('product', function ($query) use ($sellerId) {

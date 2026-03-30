@@ -4,6 +4,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\SocialiteController;
 use App\Models\Product;
@@ -49,6 +50,7 @@ Route::group(['prefix' => 'order'], function () {
     Route::get('/address', [OrderController::class, 'address'])->name('order.address');
     Route::patch('/address', [OrderController::class, 'updateAddress'])->name('order.address.update');
     Route::get('/{id}/tracking', [OrderController::class, 'tracking'])->name('order.tracking');
+    Route::post('/{id}/review', [ReviewController::class, 'store'])->name('order.review.store');
     Route::post('/store' , [OrderController::class , 'store'])->name('order.store');
 });
 

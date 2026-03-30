@@ -260,6 +260,12 @@ export default function OrderDetailPage({ orders }: { orders: Order[] }) {
                                                                         "Product"}
                                                                 </h3>
                                                                 <Badge
+                                                                    variant="outline"
+                                                                    className="border-primary text-primary"
+                                                                >
+                                                                    COD Available
+                                                                </Badge>
+                                                                <Badge
                                                                     variant={
                                                                         status.badgeVariant
                                                                     }

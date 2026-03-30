@@ -6,6 +6,8 @@ use App\Mail\OrderPlacedMail;
 use App\Mail\PrintInvoiceEachMail;
 use App\Models\Cart;
 use App\Models\Order;
+use App\Models\Rating;
+use App\Models\Review;
 use App\Models\Shapping_Address;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -67,9 +69,37 @@ class OrderController extends Controller
             ->with('success', 'Shipping address updated successfully.');
     }
 
-    public function tracking(Request $request)
+    public function tracking($id)
     {
-        return Inertia::render('Item/Order/OrderTrackingPage');
+        $order = Order::with([
+            'product.productimages',
+            'ordervariants',
+        ])
+            ->where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $order->product?->productimages?->transform(function ($image) {
+            $imagePath = $image->image_url;
+
+            if (!str_starts_with($imagePath, '/storage/') && !filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                $image->image_url = Storage::url($imagePath);
+            }
+
+            return $image;
+        });
+        $rating = Rating::where('user_id', Auth::id())
+            ->where('product_id', $order->product_id)
+            ->value('value');
+        $review = Review::where('user_id', Auth::id())
+            ->where('product_id', $order->product_id)
+            ->value('review');
+
+        return Inertia::render('Item/Order/OrderTrackingPage', [
+            'order' => $order,
+            'rating' => $rating,
+            'review' => $review,
+        ]);
     }
 
     public function seller_order_index()

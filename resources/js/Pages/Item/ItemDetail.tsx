@@ -61,7 +61,7 @@ export default function ItemDetail({ item }: { item: Product | null }) {
         );
     }
 
-    const rating = item?.ratings_count ?? 0 / 5;
+    const rating = item?.average_rating ?? 0;
     const reviewCount = item?.reviews_count ?? 0;
     const filledStars = Math.round(rating);
     const [processing, setProcessing] = useState(false);
@@ -279,6 +279,12 @@ export default function ItemDetail({ item }: { item: Product | null }) {
                                 <Badge className="bg-foreground text-background">
                                     In stock
                                 </Badge>
+                                <Badge
+                                    variant="outline"
+                                    className="border-primary text-primary"
+                                >
+                                    COD Available
+                                </Badge>
                             </div>
                             <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                                 {item.name}
@@ -323,6 +329,14 @@ export default function ItemDetail({ item }: { item: Product | null }) {
                                 </span>
                                 <span className="font-medium text-foreground">
                                     {item.seller?.shop_name}
+                                </span>
+                            </div>
+                            <div className="mt-4 flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                    Payment
+                                </span>
+                                <span className="font-medium text-foreground">
+                                    Cash on Delivery available
                                 </span>
                             </div>
                         </div>

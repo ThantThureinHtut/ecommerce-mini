@@ -11,13 +11,37 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class SellerController extends Controller
 {
     public function index()
     {
-        return Inertia::render("Seller/SellerDashboard");
+        $products = collect();
+        $user = Auth::user();
+
+        if ($user?->seller) {
+            $products = $user->seller
+                ->products()
+                ->with('productimages')
+                ->latest('id')
+                ->get();
+
+            $products->each(function ($product) {
+                $product->productimages->transform(function ($image) {
+                    $image->image_url = Storage::url($image->image_url);
+
+                    return $image;
+                });
+
+                return $product;
+            });
+        }
+
+        return Inertia::render("Seller/SellerDashboard", [
+            'products' => $products,
+        ]);
     }
 
     public function register_create()

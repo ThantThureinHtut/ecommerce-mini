@@ -71,7 +71,7 @@ export default function WelcomeDashboard({ products }: { products: Products }) {
                                 <Item
                                     name={product.name}
                                     price={product.base_price}
-                                    reviewCount={product.ratings_count}
+                                    reviewCount={Number(product.reviews_count)}
                                     imageSrc={product.productimages[0]?.image_url}
                                     badge={
                                         dayjs(product.created_at).format(
@@ -80,7 +80,7 @@ export default function WelcomeDashboard({ products }: { products: Products }) {
                                             ? "New"
                                             : ""
                                     }
-                                    rating={product.ratings_count}
+                                    rating={product.average_rating ?? 0}
                                 />
                             </Link>
                         ))}

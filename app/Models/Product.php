@@ -22,6 +22,7 @@ class Product extends Model
     ];
     protected $appends = [
         'ratings_count',
+        'average_rating',
         'reviews_count',
 
     ];
@@ -32,6 +33,14 @@ class Product extends Model
             get: fn() => $this->ratings()->count() ?? 0
         );
     }
+
+    protected function averageRating(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => round((float) ($this->ratings()->avg('value') ?? 0), 1)
+        );
+    }
+
     protected function reviewsCount(): Attribute
     {
         return Attribute::make(

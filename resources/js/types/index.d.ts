@@ -102,6 +102,7 @@ export type Product = {
     productimages: Images[];
     reviews?: Review[];
     stocks_count?: number;
+    average_rating?: number;
     ratings_count: number;
     reviews_count: string;
     variants?: Variant[];

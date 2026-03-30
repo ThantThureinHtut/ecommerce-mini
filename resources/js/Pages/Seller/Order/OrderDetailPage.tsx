@@ -81,6 +81,10 @@ const formatCurrency = (value: string | number) =>
 
 export default function OrderDetailPage({ orders }: { orders: Order[] }) {
     const primaryOrder = orders[0];
+    const shippingAddressLines = (primaryOrder?.shipping_address ?? "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
 
     if (!primaryOrder) {
         return (
@@ -421,6 +425,29 @@ export default function OrderDetailPage({ orders }: { orders: Order[] }) {
                                         {primaryOrder.user?.email ??
                                             "No email provided"}
                                     </p>
+                                </div>
+                                <div className="rounded-none border border-border bg-secondary/20 p-4">
+                                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                                        Shipping address
+                                    </p>
+                                    <div className="mt-2 space-y-1 text-sm font-medium text-foreground">
+                                        {shippingAddressLines.length ? (
+                                            shippingAddressLines.map(
+                                                (line, index) => (
+                                                    <p
+                                                        key={`${line}-${index}`}
+                                                    >
+                                                        {line}
+                                                    </p>
+                                                ),
+                                            )
+                                        ) : (
+                                            <p className="text-muted-foreground">
+                                                No buyer address saved for this
+                                                order.
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

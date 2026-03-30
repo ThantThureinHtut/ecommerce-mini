@@ -127,6 +127,7 @@ export interface Order {
     product_id: number;
     created_at: string;
     updated_at: string;
+    shipping_address?: string | null;
     product: Product;
     ordervariants: OrderVariant[];
     user: User;

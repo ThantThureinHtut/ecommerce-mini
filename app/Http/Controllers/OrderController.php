@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\OrderPlacedMail;
+use App\Mail\PrintInvoiceEachMail;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Shapping_Address;
@@ -22,8 +23,6 @@ class OrderController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $address = Shapping_Address::where('user_id', Auth::id())->first();
-
         if (isset($orders)) {
             foreach ($orders as $order) {
                 $order->product->productimages->transform(function ($image) {
@@ -37,7 +36,6 @@ class OrderController extends Controller
         }
         return Inertia::render('Item/Order/OrderPage', [
             'orders' => $orders,
-            'address' => $address,
         ]);
     }
 
@@ -65,7 +63,7 @@ class OrderController extends Controller
         );
 
         return redirect()
-            ->route('order.dashboard')
+            ->route('cart.dashboard')
             ->with('success', 'Shipping address updated successfully.');
     }
 
@@ -77,8 +75,11 @@ class OrderController extends Controller
     public function seller_order_index()
     {
         $sellerId = Auth::user()?->seller?->id;
+        $searchQuery = request()->query('search', '');
+        $statusFilter = request()->query('status', 'all');
 
-        $orders = Order::select('orders.order_number', 'orders.user_id', 'users.name as name', 'users.email as email')
+
+        $orders = Order::select('orders.order_number', 'orders.user_id', 'orders.order_status', 'users.name as name', 'users.email as email' )
             ->join('users', 'users.id', '=', 'orders.user_id')
             ->selectRaw('MAX(orders.created_at) as latest_created_at')
             ->selectRaw('COUNT(*) as item_count')
@@ -86,7 +87,17 @@ class OrderController extends Controller
             ->whereHas('product', function ($query) use ($sellerId) {
                 $query->where('seller_id', $sellerId);
             })
-            ->groupBy('orders.order_number', 'orders.user_id', 'users.name', 'users.email')
+            ->when($searchQuery, function ($query) use ($searchQuery) {
+                $query->where(function ($q) use ($searchQuery) {
+                    $q->where('orders.order_number', 'like', "%{$searchQuery}%")
+                        ->orWhere('users.name', 'like', "%{$searchQuery}%")
+                        ->orWhere('users.email', 'like', "%{$searchQuery}%");
+                });
+            })
+            ->when($statusFilter && $statusFilter !== 'all', function ($query) use ($statusFilter) {
+                $query->where('orders.order_status', $statusFilter);
+            })
+            ->groupBy('orders.order_number', 'orders.user_id', 'orders.order_status', 'users.name', 'users.email')
             ->orderByDesc('latest_created_at')
             ->paginate(10);
 
@@ -160,7 +171,7 @@ class OrderController extends Controller
         $validated = $request->validate([
             'order_status' => ['required', 'string', 'in:pending,processing,shipped,delivered,cancelled'],
         ]);
-
+        $timezone = $request->string('browser_timezone')->toString();
         $sellerId = Auth::user()?->seller?->id;
 
         $order = Order::where('id', $id)
@@ -173,18 +184,33 @@ class OrderController extends Controller
             'order_status' => $validated['order_status'],
         ]);
 
+        if(isset($order)){
+            $userEmail = $order->user->email;
+            Mail::to($userEmail)->queue(new PrintInvoiceEachMail($order, $timezone));
+        }
+
         return redirect()
-            ->route('order-view-detail.dashboard', $order->id)
+            ->route('order-view-detail.dashboard', $order->order_number)
             ->with('success', 'Order tracking status updated successfully.');
     }
 
     public function store(Request $request)
     {
+        $shippingAddress = Shapping_Address::where('user_id', Auth::id())->value('address');
+
+        if (!$shippingAddress) {
+            return redirect()
+                ->route('cart.dashboard')
+                ->withErrors([
+                    'address' => 'Please add your shipping address before checkout.',
+                ]);
+        }
+
         $cartItems = $request->cartItems;
         $variants = $request->variant;
         $cart = Cart::find($request->cart_id);
         $timezone = $request->string('browser_timezone')->toString();
-        DB::transaction(function () use ($cartItems, $variants, $cart, $timezone) {
+        DB::transaction(function () use ($cartItems, $variants, $cart, $timezone, $shippingAddress) {
             $orderCode = "ORDER-MM" . "-" . time();
             foreach ($cartItems as $cartKey => $cartItem) {
                 // $cartItem is output array so can't use the ->name
@@ -195,6 +221,7 @@ class OrderController extends Controller
                     "qty" => (int) $cartItem['qty'],
                     "user_id" => Auth::user()->id,
                     "product_id" => $cartItem['product_id'],
+                    "shipping_address" => $shippingAddress,
                 ]);
                 // This check is variant is exit for that product or not to aviod the null or underfined error
                 if (isset($variants[$cartKey])) {

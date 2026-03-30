@@ -21,7 +21,7 @@ import {
     Eye,
     DotsThree,
 } from "@phosphor-icons/react";
-import { Link } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 import { PaginatedData, PaginationLink, SellerOrder } from "@/types";
 
 const statusConfig: Record<
@@ -81,6 +81,15 @@ export default function OrderViewPage({
         (order) => order.order_status.toLowerCase() === "delivered",
     ).length;
 
+
+    const seachHandler = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const searchQuery = formData.get("search")?.toString() || "";
+        const statusFilter = formData.get("status")?.toString() || "all";
+        const orderFilter = formData.get("order")?.toString() || "newest";
+        router.get(route("order-view.dashboard"), { search: searchQuery, status: statusFilter, order: orderFilter }, { preserveState: true, preserveScroll: true });
+    }
     return (
         <SellerLayout>
             {/* Header Section */}
@@ -185,7 +194,7 @@ export default function OrderViewPage({
 
             {/* Filters & Search */}
             <section className="mt-6">
-                <div className="rounded-none border border-border bg-background/90 p-4">
+                <form onSubmit={seachHandler} className="rounded-none border border-border bg-background/90 p-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="relative flex-1">
                             <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -193,9 +202,10 @@ export default function OrderViewPage({
                                 type="text"
                                 placeholder="Search by order ID or customer..."
                                 className="pl-9"
+                                name="search"
                             />
                         </div>
-                        <Select defaultValue="all">
+                        <Select defaultValue="all" name="status">
                             <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue placeholder="Filter status" />
                             </SelectTrigger>
@@ -214,7 +224,7 @@ export default function OrderViewPage({
                                 </SelectItem>
                             </SelectContent>
                         </Select>
-                        <Select defaultValue="newest">
+                        <Select defaultValue="newest" name="order">
                             <SelectTrigger className="w-full sm:w-[150px]">
                                 <SelectValue placeholder="Sort by" />
                             </SelectTrigger>
@@ -230,7 +240,7 @@ export default function OrderViewPage({
                             </SelectContent>
                         </Select>
                     </div>
-                </div>
+                </form>
             </section>
 
             {/* Orders Table */}

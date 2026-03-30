@@ -3,14 +3,34 @@ import GuestLayout from "@/Layouts/GuestLayout";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
 import { Separator } from "@/Components/ui/separator";
-import { Link, router } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import CartFallback from "@/Components/Cart/CartFallback";
-import { Items, Product } from "@/types";
+import { Items, PageProps } from "@/types";
 const Cart = lazy(() => import("@/Components/Cart/Cart"));
 
-export default function CartPage({ items  , cart_id}: { items?: Items[] , cart_id: number}) {
+type Address = {
+    id: number;
+    user_id: number;
+    address: string;
+};
+
+export default function CartPage({
+    items,
+    cart_id,
+    address,
+}: {
+    items?: Items[];
+    cart_id?: number;
+    address?: Address | null;
+}) {
+    const { auth } = usePage<PageProps>().props;
     const [processing, setProcessing] = useState(false);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const addressLines = (address?.address ?? "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+    const hasShippingAddress = addressLines.length > 0;
     const cartItems = (items ?? []).map((item) => {
         return {
             id: item.id,
@@ -130,6 +150,53 @@ export default function CartPage({ items  , cart_id}: { items?: Items[] , cart_i
                     <div className="rounded-none border border-border bg-background/90 p-5 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                                Shipping address
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <Link href={route("order.address")}>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 px-3"
+                                    >
+                                        Edit
+                                    </Button>
+                                </Link>
+                                <Badge variant="outline">Standard</Badge>
+                            </div>
+                        </div>
+                        <Separator className="my-4" />
+                        <div className="space-y-2 text-sm">
+                            {addressLines.length > 0 ? (
+                                <>
+                                    <p className="font-semibold text-foreground">
+                                        {auth.user?.name}
+                                    </p>
+                                    {addressLines.map((line, index) => (
+                                        <p
+                                            key={`${line}-${index}`}
+                                            className="text-muted-foreground"
+                                        >
+                                            {line}
+                                        </p>
+                                    ))}
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-muted-foreground">
+                                        No shipping address added yet.
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Add your address before placing the order.
+                                    </p>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="rounded-none border border-border bg-background/90 p-5 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                                 Order summary
                             </span>
                             <Badge variant="outline">Secure</Badge>
@@ -171,9 +238,11 @@ export default function CartPage({ items  , cart_id}: { items?: Items[] , cart_i
                         <Button
                             className="mt-5 h-10 w-full"
                             onClick={(e) => orderSubmitHandler(e)}
-                            disabled={processing}
+                            disabled={processing || !cart_id || !hasShippingAddress}
                         >
-                            Proceed to checkout
+                            {hasShippingAddress
+                                ? "Proceed to checkout"
+                                : "Add address to checkout"}
                         </Button>
                         <Link href="/" className="mt-2 block">
                             <Button variant="outline" className="h-10 w-full">

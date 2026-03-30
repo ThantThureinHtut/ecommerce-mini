@@ -12,7 +12,8 @@ class Order extends Model
         'price',
         'qty',
         'user_id',
-        'product_id'
+        'product_id',
+        'shipping_address',
     ];
 
     public function ordervariants()

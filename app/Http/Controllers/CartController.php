@@ -7,6 +7,7 @@ use App\Models\CartItem;
 use App\Models\CartItemVariant;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Shapping_Address;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,7 @@ class CartController extends Controller
     {
         $id = Auth::user()->id;
         $cart_id = Cart::where('user_id', $id)->first();
+        $address = Shapping_Address::where('user_id', $id)->first();
         if ($cart_id) {
             $cartItems = CartItem::where('cart_id', $cart_id->id)->with('product:id,name,details,base_price', 'product.productimages', 'cartItemVariants.productValue.productType')->get();
             // Transform image URLs for each product in the cart items
@@ -34,9 +36,15 @@ class CartController extends Controller
                     return $image;
                 });
             }
-            return Inertia::render('Item/Cart/CartPage', ['items' => $cartItems , 'cart_id' => $cart_id->id]);
+            return Inertia::render('Item/Cart/CartPage', [
+                'items' => $cartItems,
+                'cart_id' => $cart_id->id,
+                'address' => $address,
+            ]);
         }
-    return Inertia::render('Item/Cart/CartPage');
+    return Inertia::render('Item/Cart/CartPage', [
+        'address' => $address,
+    ]);
     }
     public function store(Request $request)
     {

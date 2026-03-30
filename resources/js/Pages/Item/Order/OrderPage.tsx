@@ -3,9 +3,9 @@ import GuestLayout from "@/Layouts/GuestLayout";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
 import { Separator } from "@/Components/ui/separator";
-import { Link, usePage } from "@inertiajs/react";
+import { Link } from "@inertiajs/react";
 import { cn } from "@/lib/utils";
-import { Order, PageProps } from "@/types";
+import { Order } from "@/types";
 
 const steps = ["Placed", "Packed", "In transit", "Delivered"];
 
@@ -25,25 +25,11 @@ const formatDate = (value: string) =>
         year: "numeric",
     });
 
-type Address = {
-    id: number;
-    user_id: number;
-    address: string;
-};
-
 export default function OrderPage({
     orders,
-    address,
 }: {
     orders: Order[];
-    address: Address | null;
 }) {
-    const { auth } = usePage<PageProps>().props;
-    const addressLines = (address?.address ?? "")
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean);
-
     return (
         <GuestLayout>
             <section className="relative overflow-hidden rounded-none border border-border bg-secondary/40 order-enter">
@@ -211,50 +197,7 @@ export default function OrderPage({
                         </div>
                     ))}
                 </div>
-
                 <aside className="space-y-4 order-enter-aside">
-                    <div className="rounded-none border border-border bg-background/90 p-5 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                                Shipping address
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <Link href={route("order.address")}>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 px-3"
-                                    >
-                                        Edit
-                                    </Button>
-                                </Link>
-                                <Badge variant="outline">Standard</Badge>
-                            </div>
-                        </div>
-                        <Separator className="my-4" />
-                        <div className="space-y-2 text-sm">
-                            {addressLines.length > 0 ? (
-                                <>
-                                    <p className="font-semibold text-foreground">
-                                        {auth.user?.name}
-                                    </p>
-                                    {addressLines.map((line, index) => (
-                                        <p
-                                            key={`${line}-${index}`}
-                                            className="text-muted-foreground"
-                                        >
-                                            {line}
-                                        </p>
-                                    ))}
-                                </>
-                            ) : (
-                                <p className="text-muted-foreground">
-                                    No shipping address added yet.
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
                     <div className="rounded-none border border-border bg-secondary/40 p-5">
                         <div className="flex items-center justify-between">
                             <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">

@@ -68,12 +68,13 @@ export default function ItemDetail({ item }: { item: Product | null }) {
     const variants = item.variants ?? [];
     const hasVariants = variants.length > 0;
     const defaultPrice = item?.base_price ?? "0.00";
-    const defaultStock = Math.max(Number(item?.stock ?? 1), 1);
+    const defaultStock = Math.max(Number(item?.stock ?? 1), 0);
+
     const [priceAndQuantity, setPriceAndQuantity] = useState<{
         price: string;
         quantity: number;
     }>({ price: defaultPrice, quantity: defaultStock });
-
+    const isOutOfStock = priceAndQuantity.quantity <= 0;
     // Track selected quantity
     const [selectedQuantityValue, setselectedQuantityValue] =
         useState<number>(1);
@@ -174,8 +175,8 @@ export default function ItemDetail({ item }: { item: Product | null }) {
                 setPriceAndQuantity({
                     price: res.data.selectItem?.price ?? defaultPrice,
                     quantity: Math.max(
-                        Number(res.data.selectItem?.stock ?? defaultStock),
-                        1,
+                        Number(res.data.selectItem?.stock ),
+                        0,
                     ),
                 });
             });
@@ -193,7 +194,7 @@ export default function ItemDetail({ item }: { item: Product | null }) {
             setselectedQuantityValue(1);
         }
     }, [priceAndQuantity.quantity, selectedQuantityValue]);
-    console.log(item);
+
     return (
         <GuestLayout>
             <section className="relative overflow-hidden rounded-none border border-border bg-secondary/40">
@@ -423,30 +424,36 @@ export default function ItemDetail({ item }: { item: Product | null }) {
                             {/* Selected Value  */}
                             <div>
                                 <Select
-                                value={String(selectedQuantityValue)}
-                                onValueChange={(value) => {
-                                    setselectedQuantityValue(
-                                        Number(value)
-                                    );
-                                }}
+                                    value={String(selectedQuantityValue)}
+                                    onValueChange={(value) => {
+                                        setselectedQuantityValue(Number(value));
+                                    }}
+                                    disabled={isOutOfStock || processing}
+
                                 >
                                     <SelectTrigger className="w-[180px] text-sm py-4">
                                         <SelectValue
                                             placeholder={"Quantity 1"}
                                         />
                                     </SelectTrigger>
-                                    <SelectContent>
-                                        {Array.from({
-                                            length: maxSelectableQuantity,
-                                        }).map((_, index) => (
-                                            <SelectItem
-                                                value={`${index}`}
-                                                key={index}
-                                            >
-                                                {`Quantity ${index + 1}`}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
+                                    {isOutOfStock ? (
+                                        <p className="text-sm text-destructive mt-4">
+                                            Out of stock
+                                        </p>
+                                    ) : (
+                                        <SelectContent>
+                                            {Array.from({
+                                                length: maxSelectableQuantity,
+                                            }).map((_, index) => (
+                                                <SelectItem
+                                                    value={`${index}`}
+                                                    key={index}
+                                                >
+                                                    {`Quantity ${index + 1}`}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    )}
                                 </Select>
                             </div>
 
@@ -461,7 +468,7 @@ export default function ItemDetail({ item }: { item: Product | null }) {
                                                 "cart.store",
                                             )
                                         }
-                                        disabled={processing}
+                                        disabled={processing || isOutOfStock}
                                     >
                                         Add Cart
                                     </Button>
@@ -473,7 +480,7 @@ export default function ItemDetail({ item }: { item: Product | null }) {
                                                 "order.store",
                                             )
                                         }
-                                        disabled={processing}
+                                        disabled={processing || isOutOfStock}
                                         className="rounded-none border border-border p-5 text-xs flex-1"
                                     >
                                         Buy Now

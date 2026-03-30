@@ -33,9 +33,7 @@ class PrintInvoiceEachMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Print Invoice Each Mail',
-        );
+        return new Envelope();
     }
 
     /**

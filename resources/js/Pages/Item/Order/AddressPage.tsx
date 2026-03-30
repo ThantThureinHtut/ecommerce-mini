@@ -74,9 +74,9 @@ export default function AddressPage() {
                                 <Button type="submit" disabled={form.processing}>
                                     Save address
                                 </Button>
-                                <Link href={route("order.dashboard")}>
+                                <Link href={route("cart.dashboard")}>
                                     <Button type="button" variant="outline">
-                                        Back to orders
+                                        Back to cart
                                     </Button>
                                 </Link>
                             </div>
